@@ -3,7 +3,7 @@ package mate.academy.repository.accommodation;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import mate.academy.dto.AccommodationSearchParameters;
-import mate.academy.model.Accommodation;
+import mate.academy.exception.model.Accommodation;
 import mate.academy.repository.SpecificationBuilder;
 import mate.academy.repository.SpecificationProviderManager;
 import org.springframework.data.jpa.domain.Specification;

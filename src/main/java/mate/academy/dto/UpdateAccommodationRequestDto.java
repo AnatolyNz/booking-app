@@ -3,7 +3,7 @@ package mate.academy.dto;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.Data;
-import mate.academy.model.Accommodation;
+import mate.academy.exception.model.Accommodation;
 
 @Data
 public class UpdateAccommodationRequestDto {

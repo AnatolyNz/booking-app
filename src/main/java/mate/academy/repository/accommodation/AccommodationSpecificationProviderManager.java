@@ -3,7 +3,7 @@ package mate.academy.repository.accommodation;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import mate.academy.exception.SpecificationProviderNotFoundException;
-import mate.academy.model.Accommodation;
+import mate.academy.exception.model.Accommodation;
 import mate.academy.repository.SpecificationProvider;
 import mate.academy.repository.SpecificationProviderManager;
 import org.springframework.stereotype.Component;

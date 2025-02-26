@@ -35,7 +35,12 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: amenities
-                  type: text
+                  type: varchar(255) array
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: decimal(10,2)
                   constraints:
                     nullable: false
               - column:
@@ -48,3 +53,9 @@ databaseChangeLog:
                   type: integer
                   constraints:
                     nullable: false
+              - column:
+                  name: is_deleted
+                  type: boolean
+                  constraints:
+                    nullable: false
+                    defaultValue: false

@@ -22,9 +22,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Entity
 @Data
 @SQLDelete(sql = "UPDATE accommodations SET is_deleted = true WHERE id=?")
-@FilterDef(name = "softDeleteFilter", parameters = @ParamDef(name = "isDeleted",
+@FilterDef(name = "userSoftDeleteFilter", parameters = @ParamDef(name = "isDeleted",
         type = Boolean.class))
-@Filter(name = "softDeleteFilter", condition = "is_deleted = :isDeleted")
+@Filter(name = "userSoftDeleteFilter", condition = "is_deleted = :isDeleted")
 @Table(name = "users")
 public class User implements UserDetails {
 

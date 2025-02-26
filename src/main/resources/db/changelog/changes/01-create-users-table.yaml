@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: create-booking-table
+      id: create-user-table
       author: AnatoliiNazarov
       changes:
         - createTable:
-            tableName: booking
+            tableName: users
             columns:
               - column:
                   name: id
@@ -14,39 +14,34 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: check_in_date
-                  type: date
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: first_name
+                  type: varchar(255)
                   constraints:
                     nullable: false
               - column:
-                  name: check_out_date
-                  type: date
+                  name: last_name
+                  type: varchar(255)
                   constraints:
                     nullable: false
               - column:
-                  name: accommodation_id
-                  type: bigint
+                  name: password
+                  type: varchar(255)
                   constraints:
                     nullable: false
               - column:
-                  name: user_id
-                  type: bigint
-                  constraints:
-                    nullable: false
-              - column:
-                  name: status
+                  name: role
                   type: varchar(20)
                   constraints:
                     nullable: false
-        - addForeignKeyConstraint:
-            baseTableName: booking
-            baseColumnNames: accommodation_id
-            referencedTableName: accommodation
-            referencedColumnNames: id
-            constraintName: fk_accommodation
-        - addForeignKeyConstraint:
-            baseTableName: booking
-            baseColumnNames: user_id
-            referencedTableName: users
-            referencedColumnNames: id
-            constraintName: fk_user
+              - column:
+                  name: is_deleted
+                  type: boolean
+                  constraints:
+                    nullable: false
+                    defaultValue: false

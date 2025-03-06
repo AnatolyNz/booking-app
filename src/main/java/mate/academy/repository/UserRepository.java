@@ -1,7 +1,7 @@
 package mate.academy.repository;
 
 import java.util.Optional;
-import mate.academy.exception.model.User;
+import mate.academy.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, Long> {

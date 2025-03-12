@@ -1,7 +1,7 @@
 package mate.academy.dto.booking;
 
-import lombok.Data;
 import java.time.LocalDate;
+import lombok.Data;
 
 @Data
 public class CreateBookingRequestDto {

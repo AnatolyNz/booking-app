@@ -14,11 +14,6 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: status
-                  type: varchar(255)
-                  constraints:
-                    nullable: false
-              - column:
                   name: type
                   type: varchar(255)
                   constraints:

@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - preConditions:
+      - dbms:
+          type: postgresql
+          onFail: WARN
+  - changeSet:
+      id: insert-accommodations
+      author: AnatoliiNazarov
+      changes:
+        - insert:
+            tableName: accommodations
+            columns:
+              - column: { name: type, value: 'HOUSE' }
+              - column: { name: location, value: '123 Ocean Drive, Miami' }
+              - column: { name: size, value: '3 Bedroom' }
+              - column: { name: amenities, value: '{WiFi, Air Conditioning, Swimming Pool, Parking, Kitchen}' }
+              - column: { name: price, valueNumeric: 250.00 }
+              - column: { name: daily_rate, valueNumeric: 250.00 }
+              - column: { name: availability, valueNumeric: 5 }
+              - column: { name: is_deleted, value: false }   # Provide a value for is_deleted
+        - insert:
+            tableName: accommodations
+            columns:
+              - column: { name: type, value: 'APARTMENT' }
+              - column: { name: location, value: '456 Park Avenue, NYC' }
+              - column: { name: size, value: '1 Bedroom' }
+              - column: { name: amenities, value: '{WiFi, Heating, Elevator, Balcony, Laundry}' }
+              - column: { name: price, valueNumeric: 180.00 }
+              - column: { name: daily_rate, valueNumeric: 180.00 }
+              - column: { name: availability, valueNumeric: 3 }
+              - column: { name: is_deleted, value: false }   # Provide a value for is_deleted
+        - insert:
+            tableName: accommodations
+            columns:
+              - column: { name: type, value: 'CONDO' }
+              - column: { name: location, value: '789 Sunset Blvd, LA' }
+              - column: { name: size, value: 'Studio' }
+              - column: { name: amenities, value: '{WiFi, Air Conditioning, Gym, Parking}' }
+              - column: { name: price, valueNumeric: 220.00 }
+              - column: { name: daily_rate, valueNumeric: 220.00 }
+              - column: { name: availability, valueNumeric: 2 }
+              - column: { name: is_deleted, value: false }   # Provide a value for is_deleted
+        - insert:
+            tableName: accommodations
+            columns:
+              - column: { name: type, value: 'VACATION_HOME' }
+              - column: { name: location, value: '100 Beach Rd, Hawaii' }
+              - column: { name: size, value: '4 Bedroom' }
+              - column: { name: amenities, value: '{WiFi, Air Conditioning, Swimming Pool, Hot Tub, Fireplace}' }
+              - column: { name: price, valueNumeric: 350.00 }
+              - column: { name: daily_rate, valueNumeric: 350.00 }
+              - column: { name: availability, valueNumeric: 1 }
+              - column: { name: is_deleted, value: false }   # Provide a value for is_deleted

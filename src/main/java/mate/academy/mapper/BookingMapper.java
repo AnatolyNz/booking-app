@@ -11,12 +11,15 @@ import org.mapstruct.MappingTarget;
 @Mapper(config = MapperConfig.class)
 public interface BookingMapper {
     @Mapping(source = "accommodation.id", target = "accommodationId")
+    @Mapping(source = "user.id", target = "userId")
     BookingDto toDto(Booking booking);
 
     @Mapping(source = "accommodationId", target = "accommodation.id")
+    @Mapping(source = "userId", target = "user.id")
     Booking toEntity(CreateBookingRequestDto requestDto);
 
     @Mapping(source = "accommodationId", target = "accommodation.id")
+    @Mapping(source = "userId", target = "user.id")
     void updateBookingFromDto(CreateBookingRequestDto requestDto,
                               @MappingTarget Booking booking);
 }

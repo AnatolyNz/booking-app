@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/changes/02-create-accommodations-table.yaml
   - include:
       file: db/changelog/changes/03-create-booking-table.yaml
+  - include:
+      file: db/changelog/changes/04-insert-accommodations.yaml

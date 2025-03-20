@@ -8,9 +8,12 @@ import lombok.RequiredArgsConstructor;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
 import mate.academy.exception.RegistrationException;
+import mate.academy.model.User;
 import mate.academy.service.BookingService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,14 +32,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookingController {
     private final BookingService bookingService;
 
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     @GetMapping("/my")
     @Operation(summary = "Get all booking", description = "Get a list of all available bookings")
-    public List findAll(Pageable pageable) {
-        return bookingService.findAll(pageable);
+    public List<BookingDto> getAllBookings(Authentication authentication,
+                                           Pageable pageable) {
+        return bookingService.getAllBookings((User) authentication.getPrincipal(), pageable);
     }
 
     @GetMapping("/{id}")
-    public BookingDto getBookById(@PathVariable Long id) {
+    public BookingDto getBookingById(@PathVariable Long id) {
         return bookingService.getBookingById(id);
     }
 

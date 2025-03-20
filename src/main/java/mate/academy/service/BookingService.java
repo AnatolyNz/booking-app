@@ -3,12 +3,13 @@ package mate.academy.service;
 import java.util.List;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
+import mate.academy.model.User;
 import org.springframework.data.domain.Pageable;
 
 public interface BookingService {
     BookingDto getBookingById(Long id);
 
-    List<BookingDto> findAll(Pageable pageable);
+    List<BookingDto> getAllBookings(User user, Pageable pageable);
 
     BookingDto createBooking(CreateBookingRequestDto bookingDto);
 

@@ -9,7 +9,9 @@ import mate.academy.exception.BookingNotFoundException;
 import mate.academy.exception.EntityNotFoundException;
 import mate.academy.mapper.BookingMapper;
 import mate.academy.model.Booking;
+import mate.academy.model.User;
 import mate.academy.repository.booking.BookingRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -27,8 +29,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> findAll(Pageable pageable) {
-        return null;
+    public List<BookingDto> getAllBookings(User user,
+                                               Pageable pageable) {
+        Page<Booking> allOrders = bookingRepository.findAllByUserId(user.getId(), pageable);
+        return bookingMapper.toBookingDto(allOrders);
     }
 
     @Override

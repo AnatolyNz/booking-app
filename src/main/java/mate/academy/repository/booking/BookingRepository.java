@@ -13,6 +13,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long>,
 
     Optional<Booking> getBookingById(Long id);
 
+    Page<Booking> findAllByUserId(Long userId, Pageable pageable);
+
     List<Booking> findAll();
 
     Page<Booking> findByUserIdAndStatus(Long userId, String status, Pageable pageable);

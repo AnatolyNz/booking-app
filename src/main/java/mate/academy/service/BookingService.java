@@ -10,7 +10,11 @@ import org.springframework.data.domain.Pageable;
 public interface BookingService {
     BookingDto getBookingById(Long id);
 
+    List<BookingDto> getBookingsByUserId(Long userId, Pageable pageable);
+
     List<BookingDto> getAllBookings(User user, Pageable pageable);
+
+    List<BookingDto> getAllBookingsWithoutUserId(Pageable pageable);
 
     BookingDto createBooking(CreateBookingRequestDto bookingDto);
 

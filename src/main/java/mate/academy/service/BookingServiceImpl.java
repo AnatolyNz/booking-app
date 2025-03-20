@@ -28,10 +28,23 @@ public class BookingServiceImpl implements BookingService {
                         EntityNotFoundException("Can't find booking with id " + id)));
     }
 
+    public List<BookingDto> getBookingsByUserId(Long userId, Pageable pageable) {
+        return bookingRepository.findAllByUserId(userId, pageable)
+                .stream()
+                .map(bookingMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
     @Override
     public List<BookingDto> getAllBookings(User user,
                                                Pageable pageable) {
         Page<Booking> allOrders = bookingRepository.findAllByUserId(user.getId(), pageable);
+        return bookingMapper.toBookingDto(allOrders);
+    }
+
+    @Override
+    public List<BookingDto> getAllBookingsWithoutUserId(Pageable pageable) {
+        Page<Booking> allOrders = bookingRepository.findAll(pageable);
         return bookingMapper.toBookingDto(allOrders);
     }
 

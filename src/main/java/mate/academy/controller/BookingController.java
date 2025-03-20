@@ -15,15 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Booking management", description = "Endpoints for managing booking")
 @RequiredArgsConstructor
@@ -36,8 +29,14 @@ public class BookingController {
     @GetMapping("/my")
     @Operation(summary = "Get all booking", description = "Get a list of all available bookings")
     public List<BookingDto> getAllBookings(Authentication authentication,
-                                           Pageable pageable) {
-        return bookingService.getAllBookings((User) authentication.getPrincipal(), pageable);
+                                           Pageable pageable,
+                                           @RequestParam(value = "userId", required = false) Long userId) {
+        User currentUser = (User) authentication.getPrincipal();
+        if (currentUser.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")) && userId != null) {
+            return bookingService.getBookingsByUserId(userId, pageable);
+        } else {
+            return bookingService.getAllBookingsWithoutUserId(pageable);
+        }
     }
 
     @GetMapping("/{id}")

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
 import mate.academy.exception.RegistrationException;
+import mate.academy.model.Booking;
 import mate.academy.model.User;
 import mate.academy.service.BookingService;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookingController {
     private final BookingService bookingService;
 
-    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     @GetMapping("/my")
     @Operation(summary = "Get all booking", description = "Get a list of all available bookings")
     public List<BookingDto> getAllBookings(Authentication authentication,
@@ -52,12 +52,12 @@ public class BookingController {
         return bookingService.createBooking(request);
     }
 
-    @GetMapping
+    @GetMapping("/{userId}/{status}")
     @Operation(summary = "Get bookings by user ID and status", description =
             "Retrieves bookings based on user ID and status (Available for managers)")
     public List<BookingDto> getBookingsByUserIdAndStatus(
-            @RequestParam Long userId,
-            @RequestParam String status,
+            @PathVariable Long userId,
+            @PathVariable Booking.BookingStatus status,
             Pageable pageable) {
         return bookingService.getBookingsByUserIdAndStatus(userId, status, pageable);
     }

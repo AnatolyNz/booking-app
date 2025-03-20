@@ -45,8 +45,8 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getBookingsByUserIdAndStatus(Long userId,
-                                                         String status, Pageable pageable) {
+    public List<BookingDto> getBookingsByUserIdAndStatus(
+            Long userId, Booking.BookingStatus status, Pageable pageable) {
         return bookingRepository.findByUserIdAndStatus(userId,
                         status, pageable)
                 .stream()

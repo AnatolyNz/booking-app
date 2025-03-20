@@ -3,6 +3,7 @@ package mate.academy.service;
 import java.util.List;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
+import mate.academy.model.Booking;
 import mate.academy.model.User;
 import org.springframework.data.domain.Pageable;
 
@@ -13,7 +14,8 @@ public interface BookingService {
 
     BookingDto createBooking(CreateBookingRequestDto bookingDto);
 
-    List<BookingDto> getBookingsByUserIdAndStatus(Long userId, String status, Pageable pageable);
+    List<BookingDto> getBookingsByUserIdAndStatus(Long userId,
+                                                  Booking.BookingStatus status, Pageable pageable);
 
     BookingDto updateBooking(Long id, CreateBookingRequestDto request);
 

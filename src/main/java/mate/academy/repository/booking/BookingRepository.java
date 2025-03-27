@@ -1,5 +1,6 @@
 package mate.academy.repository.booking;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import mate.academy.model.Booking;
@@ -19,4 +20,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long>,
 
     Page<Booking> findByUserIdAndStatus(Long userId,
                                         Booking.BookingStatus status, Pageable pageable);
+
+    // Method to check if a booking already exists for the same accommodation and date
+    boolean existsByAccommodationIdAndCheckInDateBeforeAndCheckOutDateAfter(
+            Long accommodationId, LocalDate checkInDateBefore, LocalDate checkOutDateAfter);
 }

@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
+import mate.academy.exception.BookingAlreadyCancelledException;
 import mate.academy.exception.BookingAlreadyExistsException;
 import mate.academy.exception.BookingNotFoundException;
 import mate.academy.exception.EntityNotFoundException;
@@ -114,7 +115,10 @@ public class BookingServiceImpl implements BookingService {
     public void cancelBooking(Long id) {
         Booking booking = bookingRepository.findById(id).orElseThrow(() ->
                 new BookingNotFoundException(id));
-        booking.setStatus(Booking.BookingStatus.valueOf("CANCELLED"));
+        if (booking.getStatus() == Booking.BookingStatus.valueOf("CANCELED")) {
+            throw new BookingAlreadyCancelledException("This booking has already been canceled.");
+        }
+        booking.setStatus(Booking.BookingStatus.valueOf("CANCELED"));
         bookingRepository.save(booking);
     }
 }

@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
+import mate.academy.exception.BookingAlreadyCancelledException;
 import mate.academy.exception.BookingAlreadyExistsException;
 import mate.academy.exception.RegistrationException;
 import mate.academy.model.Booking;
@@ -109,5 +110,12 @@ public class BookingController {
         public void setMessage(String message) {
             this.message = message;
         }
+    }
+
+    @ExceptionHandler(BookingAlreadyCancelledException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleBookingAlreadyCancelledException(
+            BookingAlreadyCancelledException ex) {
+        return new ErrorResponse(ex.getMessage());
     }
 }

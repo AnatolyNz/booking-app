@@ -1,0 +1,37 @@
+services:
+  postgresdb:
+    image: postgres:latest
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_DB_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+    ports:
+      - "${POSTGRES_LOCAL_PORT}:${POSTGRES_DOCKER_PORT}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  app:
+    depends_on:
+      - postgresdb
+    image: booking-app
+    restart: on-failure
+    container_name: app
+    build: .
+    env_file: ./.env
+    ports:
+      - "${SPRING_LOCAL_PORT}:${SPRING_DOCKER_PORT}"
+      - "${DEBUG_PORT}:${DEBUG_PORT}"
+    environment:
+      SPRING_APPLICATION_JSON: '{
+        "spring.datasource.url": "jdbc:postgresql://postgresdb:${POSTGRES_DOCKER_PORT}/${POSTGRES_DB}",
+        "spring.datasource.username": "${POSTGRES_USER}",
+        "spring.datasource.password": "${POSTGRES_DB_PASSWORD}",
+        "spring.jpa.hibernate.ddl-auto" : "validate"
+      }'
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:${DEBUG_PORT}"

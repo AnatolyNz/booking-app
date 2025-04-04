@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 public class BookingServiceImpl implements BookingService {
     private final BookingMapper bookingMapper;
     private final BookingRepository bookingRepository;
+    private final NotificationService notificationService;
 
     @Override
     public BookingDto getBookingById(Long id) {
@@ -67,6 +68,15 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingMapper.toEntity(createBookingRequestDto);
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        String message = String.format(
+                "New booking created:\nUser: %s\nAccommodation: "
+                        + "%s\nCheck-in: %s\nCheck-out: %s",
+                savedBooking.getUser().getUsername(),
+                savedBooking.getAccommodation().getLocation(),
+                savedBooking.getCheckInDate(),
+                savedBooking.getCheckOutDate());
+        notificationService.sendMessage(savedBooking.getUser().getUsername(), message);
 
         return bookingMapper.toDto(savedBooking);
     }
@@ -120,5 +130,13 @@ public class BookingServiceImpl implements BookingService {
         }
         booking.setStatus(Booking.BookingStatus.valueOf("CANCELED"));
         bookingRepository.save(booking);
+
+        String message = String.format("Booking canceled:\nUser: "
+                        + "%s\nAccommodation: %s\nCheck-in: %s\nCheck-out: %s",
+                booking.getUser().getUsername(),
+                booking.getAccommodation().getLocation(),
+                booking.getCheckInDate(),
+                booking.getCheckOutDate());
+        notificationService.sendMessage(booking.getUser().getUsername(), message);
     }
 }

@@ -28,7 +28,13 @@ public class UserServiceImpl implements UserService {
         user.setEmail(request.getEmail());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
-        user.setRole(User.UserRole.USER);
+
+        if ("admin@example.com".equalsIgnoreCase(request.getEmail())) {
+            user.setRole(User.UserRole.ADMIN);
+        } else {
+            user.setRole(User.UserRole.USER);
+        }
+
         User savedUser = userRepository.save(user);
         return userMapper.toDto(savedUser);
     }

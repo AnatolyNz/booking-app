@@ -8,7 +8,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.springframework.stereotype.Service;
 
+@Service
 public class TelegramNotificationService implements NotificationService {
 
     private static final String BOT_TOKEN = System.getenv("BOT_TOKEN");
@@ -53,4 +55,3 @@ public class TelegramNotificationService implements NotificationService {
         });
     }
 }
-

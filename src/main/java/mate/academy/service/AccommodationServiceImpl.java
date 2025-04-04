@@ -22,11 +22,21 @@ public class AccommodationServiceImpl implements AccommodationService {
     private final AccommodationRepository accommodationRepository;
     private final AccommodationMapper accommodationMapper;
     private final AccommodationSpecificationBuilder accommodationSpecificationBuilder;
+    private final NotificationService notificationService;
 
     @Override
     public AccommodationDto save(CreateAccommodationRequestDto createAccommodationRequestDto) {
         Accommodation accommodation = accommodationMapper.toModel(createAccommodationRequestDto);
         Accommodation savedAccommodation = accommodationRepository.save(accommodation);
+
+        String message = String.format(
+                "New accommodation added:\nLocation: %s\nSize: %s\nPrice: %s\nAvailability: %d",
+                savedAccommodation.getLocation(),
+                savedAccommodation.getSize(),
+                savedAccommodation.getPrice(),
+                savedAccommodation.getAvailability());
+        notificationService.sendMessage(savedAccommodation.getLocation(), message);
+
         return accommodationMapper.toDto(savedAccommodation);
     }
 
@@ -55,6 +65,9 @@ public class AccommodationServiceImpl implements AccommodationService {
     @Override
     public void deleteById(Long id) {
         accommodationRepository.deleteById(id);
+
+        String message = "An accommodation has been released (deleted). ID: " + id;
+        notificationService.sendMessage("Admin", message);
     }
 
     @Override

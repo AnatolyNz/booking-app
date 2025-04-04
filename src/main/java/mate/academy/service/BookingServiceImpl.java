@@ -11,11 +11,14 @@ import mate.academy.exception.BookingAlreadyExistsException;
 import mate.academy.exception.BookingNotFoundException;
 import mate.academy.exception.EntityNotFoundException;
 import mate.academy.mapper.BookingMapper;
+import mate.academy.model.Accommodation;
 import mate.academy.model.Booking;
 import mate.academy.repository.booking.BookingRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -138,5 +141,47 @@ public class BookingServiceImpl implements BookingService {
                 booking.getCheckInDate(),
                 booking.getCheckOutDate());
         notificationService.sendMessage(booking.getUser().getUsername(), message);
+    }
+
+    @Scheduled(cron = "0 22 12 * * ?")
+    @Transactional
+    public void checkExpiredBookings() {
+        LocalDate today = LocalDate.now();
+        LocalDate tomorrow = today.plusDays(1);
+
+        List<Booking> expiredBookings = bookingRepository
+                .findNonCancelledBookingsBeforeReturnDate(tomorrow);
+
+        if (expiredBookings.isEmpty()) {
+            notificationService.sendMessage("Telegram", "No expired bookings today!");
+        } else {
+            for (Booking booking : expiredBookings) {
+                booking.setStatus(Booking.BookingStatus.EXPIRED);
+                bookingRepository.save(booking);
+
+                Accommodation accommodation = booking.getAccommodation();
+                String accommodationDetails = generateAccommodationDetails(accommodation);
+
+                String message = String.format(
+                        "Booking expired:\nUser: %s\nAccommodation: "
+                                + "%s\nCheck-in: %s\nCheck-out: %s\nDetails: %s",
+                        booking.getUser().getUsername(),
+                        accommodation.getLocation(),
+                        booking.getCheckInDate(),
+                        booking.getCheckOutDate(),
+                        accommodationDetails
+                );
+
+                notificationService.sendMessage("Telegram", message);
+            }
+        }
+    }
+
+    private String generateAccommodationDetails(Accommodation accommodation) {
+        return String.format("Accommodation Type: %s\nLocation: %s\nPrice: %.2f\nAvailability: %d",
+                accommodation.getType(),
+                accommodation.getLocation(),
+                accommodation.getPrice(),
+                accommodation.getAvailability());
     }
 }

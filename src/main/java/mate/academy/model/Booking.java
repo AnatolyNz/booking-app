@@ -19,7 +19,7 @@ import org.hibernate.annotations.SQLDelete;
 
 @Entity
 @Data
-@SQLDelete(sql = "UPDATE accommodations SET is_deleted = true WHERE id=?")
+@SQLDelete(sql = "UPDATE booking SET is_deleted = true WHERE id=?")
 @FilterDef(name = "bookingSoftDeleteFilter", parameters = @ParamDef(name = "isDeleted",
         type = Boolean.class))
 @Filter(name = "bookingSoftDeleteFilter", condition = "is_deleted = :isDeleted")

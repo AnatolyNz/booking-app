@@ -51,6 +51,6 @@ public class Payment {
         PENDING,
         PAID,
         FAILED,
-        CANCELED
+        CANCELLED
     }
 }

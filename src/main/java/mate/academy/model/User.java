@@ -21,7 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
 @Data
-@SQLDelete(sql = "UPDATE accommodations SET is_deleted = true WHERE id=?")
+@SQLDelete(sql = "UPDATE users SET is_deleted = true WHERE id=?")
 @FilterDef(name = "userSoftDeleteFilter", parameters = @ParamDef(name = "isDeleted",
         type = Boolean.class))
 @Filter(name = "userSoftDeleteFilter", condition = "is_deleted = :isDeleted")
@@ -50,7 +50,7 @@ public class User implements UserDetails {
     public enum UserRole {
         ADMIN,
         USER,
-        GUEST;
+        GUEST
     }
 
     @Override

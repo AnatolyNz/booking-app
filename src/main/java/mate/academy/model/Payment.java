@@ -47,10 +47,17 @@ public class Payment {
     @Column(nullable = false)
     private BigDecimal amountToPay;
 
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
     public enum PaymentStatus {
         PENDING,
         PAID,
         FAILED,
         CANCELLED
+    }
+
+    public User getUser() {
+        return this.booking != null ? this.booking.getUser() : null;
     }
 }

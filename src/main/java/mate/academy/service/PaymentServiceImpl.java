@@ -1,14 +1,19 @@
 package mate.academy.service;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import mate.academy.dto.payment.PaymentDto;
+import mate.academy.mapper.PaymentMapper;
 import mate.academy.model.Booking;
 import mate.academy.model.Payment;
 import mate.academy.repository.PaymentRepository;
 import mate.academy.repository.booking.BookingRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,16 +21,19 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
+    private final PaymentMapper paymentMapper;
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
 
     @Transactional
     public Payment initiatePayment(Long bookingId,
-                                   String sessionUrl, String sessionId,
+                                   String sessionUrl,
                                    BigDecimal amountToPay) {
         Booking booking = bookingRepository
                 .findById(bookingId).orElseThrow(() ->
                         new RuntimeException("Booking not found"));
+
+        String sessionId = UUID.randomUUID().toString();
 
         Payment payment = new Payment();
         payment.setBooking(booking);
@@ -45,34 +53,35 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentRepository.save(payment);
     }
 
-    public List<Payment> getPaymentsByBooking(Long bookingId) {
-        return paymentRepository.findByBookingId(bookingId);
-    }
-
     public Payment getPaymentBySessionId(String sessionId) {
         return paymentRepository.findBySessionId(sessionId);
     }
 
+    public List<PaymentDto> getPaymentsByUserId(Long userId, Pageable pageable) {
+        Page<Payment> payments = paymentRepository.findAllByUserId(userId, pageable);
+        return payments.stream().map(payment -> paymentMapper.toDto(payment))
+                .collect(Collectors.toList());
+    }
+
     @Override
-    public Map<String, Object> getPaymentInformation(Long userId) {
-        List<Payment> payments = paymentRepository.findByBookingId(userId);
-        Map<String, Object> response = new HashMap<>();
-        response.put("payments", payments);
-        return response;
+    public List<PaymentDto> getAllPayments(Pageable pageable) {
+        List<Payment> payments = paymentRepository.findAllPayments(pageable);
+        return payments.stream().map(payment -> paymentMapper.toDto(payment))
+                .collect(Collectors.toList());
     }
 
     @Override
     public String createPaymentSession(Map<String, Object> bookingDetails) {
         String sessionUrl = "stripe_session_url";
-        String sessionId = "stripe_session_id";
-        BigDecimal amountToPay = new BigDecimal("100.00");
+        BigDecimal amountToPay = new BigDecimal(bookingDetails.get("amountToPay").toString());
 
-        Payment payment = initiatePayment(
-                (Long) bookingDetails.get("bookingId"),
-                sessionUrl, sessionId,
-                amountToPay
-        );
-        return "Payment session created: " + payment.getSessionId();
+        Long bookingId = (Long) (bookingDetails.get("bookingId") instanceof Integer
+                ? Long.valueOf((Integer) bookingDetails.get("bookingId"))
+                : bookingDetails.get("bookingId"));
+
+        Payment payment = initiatePayment(bookingId, sessionUrl, amountToPay);
+
+        return "Payment session created with sessionId: " + payment.getSessionId();
     }
 
     @Override

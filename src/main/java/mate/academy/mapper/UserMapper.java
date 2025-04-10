@@ -1,7 +1,7 @@
 package mate.academy.mapper;
 
 import mate.academy.config.MapperConfig;
-import mate.academy.dto.CreateAccommodationRequestDto;
+import mate.academy.dto.accommodation.CreateAccommodationRequestDto;
 import mate.academy.dto.user.UserResponseDto;
 import mate.academy.model.User;
 import org.mapstruct.Mapper;

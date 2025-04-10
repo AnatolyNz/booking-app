@@ -2,7 +2,7 @@ package mate.academy.repository.accommodation;
 
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
-import mate.academy.dto.AccommodationSearchParameters;
+import mate.academy.dto.accommodation.AccommodationSearchParameters;
 import mate.academy.model.Accommodation;
 import mate.academy.repository.SpecificationBuilder;
 import mate.academy.repository.SpecificationProviderManager;

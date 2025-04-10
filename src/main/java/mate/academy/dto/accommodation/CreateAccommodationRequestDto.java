@@ -1,4 +1,4 @@
-package mate.academy.dto;
+package mate.academy.dto.accommodation;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -6,9 +6,8 @@ import lombok.Data;
 import mate.academy.model.Accommodation;
 
 @Data
-public class AccommodationDto {
+public class CreateAccommodationRequestDto {
 
-    private Long id;
     private String location;
     private String size;
     private List<String> amenities;
@@ -16,7 +15,5 @@ public class AccommodationDto {
     private Integer availability;
     private BigDecimal dailyRate;
     private Accommodation.Type type;
-    private boolean isDeleted;
 
 }
-

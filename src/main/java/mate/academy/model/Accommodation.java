@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -30,7 +31,8 @@ public class Accommodation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(mappedBy = "accommodation")
+    @OneToMany(mappedBy = "accommodation", fetch = FetchType.EAGER)
+    //@OneToMany(mappedBy = "accommodation")
     private List<Booking> bookings;
 
     @Column(nullable = false)

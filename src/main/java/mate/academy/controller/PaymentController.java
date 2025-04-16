@@ -2,6 +2,7 @@ package mate.academy.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Tag(name = "Payment management", description = "Endpoints for managing payment")
 @CrossOrigin
@@ -52,8 +54,29 @@ public class PaymentController {
     @Operation(summary = "Create payment session", description
             = "Create a Stripe Checkout session for a booking")
     public ResponseEntity<Map<String, String>> createPaymentSession(
-            @RequestBody Map<String, Object> bookingDetails) {
-        String sessionUrl = paymentService.createPaymentSession(bookingDetails);
+            @RequestBody Map<String, Object> bookingDetails,
+            HttpServletRequest request) {
+
+        String baseUrl = UriComponentsBuilder
+                .fromHttpUrl(request.getRequestURL().toString())
+                .replacePath(request.getContextPath())
+                .build()
+                .toUriString(); // e.g., http://localhost:8080
+
+        String successUrl = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                .path("/payments/success")
+                .queryParam("session_id", "{CHECKOUT_SESSION_ID}")
+                .build()
+                .toUriString();
+
+        String cancelUrl = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                .path("/payments/cancel")
+                .queryParam("session_id", "{CHECKOUT_SESSION_ID}")
+                .build()
+                .toUriString();
+
+        String sessionUrl = paymentService.createPaymentSession(bookingDetails,
+                successUrl, cancelUrl);
 
         Map<String, String> response = new HashMap<>();
         response.put("checkoutUrl", sessionUrl);

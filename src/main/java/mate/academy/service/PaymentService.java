@@ -20,7 +20,8 @@ public interface PaymentService {
 
     Payment getPaymentBySessionId(String sessionId);
 
-    String createPaymentSession(Map<String, Object> bookingDetails);
+    String createPaymentSession(Map<String, Object> bookingDetails,
+                                String successUrl, String cancelUrl);
 
     String handlePaymentSuccess(String sessionId);
 

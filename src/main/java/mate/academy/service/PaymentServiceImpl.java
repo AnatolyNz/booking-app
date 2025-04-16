@@ -85,7 +85,9 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public String createPaymentSession(Map<String, Object> bookingDetails) {
+    public String createPaymentSession(Map<String, Object> bookingDetails,
+                                       String successUrl,
+                                       String cancelUrl) {
         try {
             Long bookingId = (Long) (bookingDetails.get("bookingId") instanceof Integer
                     ? Long.valueOf((Integer) bookingDetails.get("bookingId"))
@@ -94,19 +96,15 @@ public class PaymentServiceImpl implements PaymentService {
             Booking booking = bookingRepository.findById(bookingId)
                     .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-            // Calculate amount (example logic, adjust if needed)
             BigDecimal amount = booking.getAccommodation().getDailyRate()
                     .multiply(BigDecimal.valueOf(ChronoUnit.DAYS.between(
                             booking.getCheckInDate(), booking.getCheckOutDate())));
             Long amountInCents = amount.multiply(BigDecimal.valueOf(100)).longValue();
 
-            // Create Stripe Checkout Session
             SessionCreateParams params = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.PAYMENT)
-                    .setSuccessUrl(
-                            "http://localhost:8080/api/payments/success?session_id={CHECKOUT_SESSION_ID}")
-                    .setCancelUrl(
-                            "http://localhost:8080/api/payments/cancel?session_id={CHECKOUT_SESSION_ID}")
+                    .setSuccessUrl(successUrl)
+                    .setCancelUrl(cancelUrl)
                     .addLineItem(
                             SessionCreateParams.LineItem.builder()
                                     .setQuantity(1L)
@@ -115,8 +113,7 @@ public class PaymentServiceImpl implements PaymentService {
                                                     .setCurrency("usd")
                                                     .setUnitAmount(amountInCents)
                                                     .setProductData(
-                                                            SessionCreateParams
-                                                                    .LineItem.PriceData
+                                                            SessionCreateParams.LineItem.PriceData
                                                                     .ProductData.builder()
                                                                     .setName("Accommodation at "
                                                                             + booking
@@ -129,12 +126,11 @@ public class PaymentServiceImpl implements PaymentService {
 
             Session session = Session.create(params);
 
-            // Save payment with real session data
             Payment payment = initiatePayment(bookingId, session.getUrl(), amount);
-            payment.setSessionId(session.getId()); // override dummy UUID with real ID
+            payment.setSessionId(session.getId());
             paymentRepository.save(payment);
 
-            return session.getUrl(); // return to frontend to redirect
+            return session.getUrl();
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Stripe session creation failed");

@@ -1,6 +1,11 @@
 package mate.academy.service;
 
+import com.stripe.Stripe;
+import com.stripe.model.checkout.Session;
+import com.stripe.param.checkout.SessionCreateParams;
+import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -12,6 +17,7 @@ import mate.academy.model.Booking;
 import mate.academy.model.Payment;
 import mate.academy.repository.PaymentRepository;
 import mate.academy.repository.booking.BookingRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,6 +30,14 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentMapper paymentMapper;
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
+
+    @Value("${STRIPE_SECRET_KEY}")
+    private String stripeSecretKey;
+
+    @PostConstruct
+    public void init() {
+        Stripe.apiKey = stripeSecretKey;
+    }
 
     @Transactional
     public Payment initiatePayment(Long bookingId,
@@ -72,16 +86,59 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public String createPaymentSession(Map<String, Object> bookingDetails) {
-        String sessionUrl = "stripe_session_url";
-        BigDecimal amountToPay = new BigDecimal(bookingDetails.get("amountToPay").toString());
+        try {
+            Long bookingId = (Long) (bookingDetails.get("bookingId") instanceof Integer
+                    ? Long.valueOf((Integer) bookingDetails.get("bookingId"))
+                    : bookingDetails.get("bookingId"));
 
-        Long bookingId = (Long) (bookingDetails.get("bookingId") instanceof Integer
-                ? Long.valueOf((Integer) bookingDetails.get("bookingId"))
-                : bookingDetails.get("bookingId"));
+            Booking booking = bookingRepository.findById(bookingId)
+                    .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-        Payment payment = initiatePayment(bookingId, sessionUrl, amountToPay);
+            // Calculate amount (example logic, adjust if needed)
+            BigDecimal amount = booking.getAccommodation().getDailyRate()
+                    .multiply(BigDecimal.valueOf(ChronoUnit.DAYS.between(
+                            booking.getCheckInDate(), booking.getCheckOutDate())));
+            Long amountInCents = amount.multiply(BigDecimal.valueOf(100)).longValue();
 
-        return "Payment session created with sessionId: " + payment.getSessionId();
+            // Create Stripe Checkout Session
+            SessionCreateParams params = SessionCreateParams.builder()
+                    .setMode(SessionCreateParams.Mode.PAYMENT)
+                    .setSuccessUrl(
+                            "http://localhost:8080/api/payments/success?session_id={CHECKOUT_SESSION_ID}")
+                    .setCancelUrl(
+                            "http://localhost:8080/api/payments/cancel?session_id={CHECKOUT_SESSION_ID}")
+                    .addLineItem(
+                            SessionCreateParams.LineItem.builder()
+                                    .setQuantity(1L)
+                                    .setPriceData(
+                                            SessionCreateParams.LineItem.PriceData.builder()
+                                                    .setCurrency("usd")
+                                                    .setUnitAmount(amountInCents)
+                                                    .setProductData(
+                                                            SessionCreateParams
+                                                                    .LineItem.PriceData
+                                                                    .ProductData.builder()
+                                                                    .setName("Accommodation at "
+                                                                            + booking
+                                                                            .getAccommodation()
+                                                                            .getLocation())
+                                                                    .build())
+                                                    .build())
+                                    .build())
+                    .build();
+
+            Session session = Session.create(params);
+
+            // Save payment with real session data
+            Payment payment = initiatePayment(bookingId, session.getUrl(), amount);
+            payment.setSessionId(session.getId()); // override dummy UUID with real ID
+            paymentRepository.save(payment);
+
+            return session.getUrl(); // return to frontend to redirect
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Stripe session creation failed");
+        }
     }
 
     @Override

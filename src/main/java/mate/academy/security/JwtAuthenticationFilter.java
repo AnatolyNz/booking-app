@@ -35,6 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
+        System.out.println("Incoming request URI: " + request.getRequestURI()); //delete
         String token = getToken(request);
 
         boolean isTokenValid = jwtUtil.isValidToken(token);
@@ -58,6 +59,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || requestUri.startsWith("/api/v3/api-docs")
                 || requestUri.startsWith("/api/auth/")
                 || requestUri.startsWith("/api/error/")
-                || requestUri.startsWith("/api/actuator/");
+                || requestUri.startsWith("/api/actuator/")
+                || requestUri.startsWith("/api/payments/success")
+                || requestUri.startsWith("/api/payments/cancel");
     }
 }

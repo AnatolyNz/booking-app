@@ -2,6 +2,7 @@ package mate.academy.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -9,9 +10,11 @@ import mate.academy.dto.payment.PaymentDto;
 import mate.academy.model.User;
 import mate.academy.service.PaymentService;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Payment management", description = "Endpoints for managing payment")
+@CrossOrigin
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/payments")
@@ -43,19 +47,33 @@ public class PaymentController {
         }
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     @PostMapping
-    public String createPaymentSession(@RequestBody Map<String, Object> bookingDetails) {
-        return paymentService.createPaymentSession(bookingDetails);
+    @Operation(summary = "Create payment session", description
+            = "Create a Stripe Checkout session for a booking")
+    public ResponseEntity<Map<String, String>> createPaymentSession(
+            @RequestBody Map<String, Object> bookingDetails) {
+        String sessionUrl = paymentService.createPaymentSession(bookingDetails);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("checkoutUrl", sessionUrl);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/success")
-    public String handlePaymentSuccess(@RequestParam("session_id") String sessionId) {
-        return paymentService.handlePaymentSuccess(sessionId);
+    @Operation(summary = "Stripe success", description = "Handle successful Stripe payment")
+    public ResponseEntity<String> handlePaymentSuccess(
+            @RequestParam("session_id") String sessionId) {
+        String result = paymentService.handlePaymentSuccess(sessionId);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/cancel")
-    public String handlePaymentCancel(@RequestParam("session_id") String sessionId) {
-        return paymentService.handlePaymentCancel(sessionId);
+    @Operation(summary = "Stripe cancel", description = "Handle cancelled Stripe payment")
+    public ResponseEntity<String> handlePaymentCancel(
+            @RequestParam("session_id") String sessionId) {
+        String result = paymentService.handlePaymentCancel(sessionId);
+        return ResponseEntity.ok(result);
     }
 }

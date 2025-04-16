@@ -3,11 +3,12 @@ package mate.academy.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import mate.academy.dto.payment.PaymentDto;
+import mate.academy.dto.payment.PaymentResponseDto;
+import mate.academy.model.Payment;
 import mate.academy.model.User;
 import mate.academy.service.PaymentService;
 import org.springframework.data.domain.Pageable;
@@ -53,7 +54,7 @@ public class PaymentController {
     @PostMapping
     @Operation(summary = "Create payment session", description
             = "Create a Stripe Checkout session for a booking")
-    public ResponseEntity<Map<String, String>> createPaymentSession(
+    public ResponseEntity<PaymentResponseDto> createPaymentSession(
             @RequestBody Map<String, Object> bookingDetails,
             HttpServletRequest request) {
 
@@ -61,7 +62,7 @@ public class PaymentController {
                 .fromHttpUrl(request.getRequestURL().toString())
                 .replacePath(request.getContextPath())
                 .build()
-                .toUriString(); // e.g., http://localhost:8080
+                .toUriString();
 
         String successUrl = UriComponentsBuilder.fromHttpUrl(baseUrl)
                 .path("/payments/success")
@@ -75,13 +76,18 @@ public class PaymentController {
                 .build()
                 .toUriString();
 
-        String sessionUrl = paymentService.createPaymentSession(bookingDetails,
+        Payment payment = paymentService.createAndReturnPaymentSession(bookingDetails,
                 successUrl, cancelUrl);
 
-        Map<String, String> response = new HashMap<>();
-        response.put("checkoutUrl", sessionUrl);
+        PaymentResponseDto responseDto = new PaymentResponseDto(
+                payment.getSessionId(),
+                payment.getSessionUrl(),
+                payment.getBooking().getId(),
+                payment.getAmountToPay(),
+                payment.getStatus().name()
+        );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(responseDto);
     }
 
     @GetMapping("/success")

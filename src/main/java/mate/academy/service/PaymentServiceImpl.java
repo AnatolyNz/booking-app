@@ -85,7 +85,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public String createPaymentSession(Map<String, Object> bookingDetails,
+    public Payment createAndReturnPaymentSession(Map<String, Object> bookingDetails,
                                        String successUrl,
                                        String cancelUrl) {
         try {
@@ -130,7 +130,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setSessionId(session.getId());
             paymentRepository.save(payment);
 
-            return session.getUrl();
+            return paymentRepository.save(payment);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Stripe session creation failed");

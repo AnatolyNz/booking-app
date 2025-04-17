@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import mate.academy.dto.payment.PaymentCancelResponseDto;
 import mate.academy.dto.payment.PaymentDto;
 import mate.academy.dto.payment.PaymentResponseDto;
 import mate.academy.model.Payment;
@@ -58,19 +59,20 @@ public class PaymentController {
             @RequestBody Map<String, Object> bookingDetails,
             HttpServletRequest request) {
 
-        String baseUrl = UriComponentsBuilder
-                .fromHttpUrl(request.getRequestURL().toString())
-                .replacePath(request.getContextPath())
+        String baseUrl = UriComponentsBuilder.newInstance()
+                .scheme(request.getScheme())
+                .host(request.getServerName())
+                .port(request.getServerPort())
                 .build()
                 .toUriString();
 
-        String successUrl = UriComponentsBuilder.fromHttpUrl(baseUrl)
+        String successUrl = UriComponentsBuilder.fromUriString(baseUrl)
                 .path("/payments/success")
                 .queryParam("session_id", "{CHECKOUT_SESSION_ID}")
                 .build()
                 .toUriString();
 
-        String cancelUrl = UriComponentsBuilder.fromHttpUrl(baseUrl)
+        String cancelUrl = UriComponentsBuilder.fromUriString(baseUrl)
                 .path("/payments/cancel")
                 .queryParam("session_id", "{CHECKOUT_SESSION_ID}")
                 .build()
@@ -100,9 +102,9 @@ public class PaymentController {
 
     @GetMapping("/cancel")
     @Operation(summary = "Stripe cancel", description = "Handle cancelled Stripe payment")
-    public ResponseEntity<String> handlePaymentCancel(
+    public ResponseEntity<PaymentCancelResponseDto> handlePaymentCancel(
             @RequestParam("session_id") String sessionId) {
-        String result = paymentService.handlePaymentCancel(sessionId);
-        return ResponseEntity.ok(result);
+        PaymentCancelResponseDto response = paymentService.handlePaymentCancel(sessionId);
+        return ResponseEntity.ok(response);
     }
 }

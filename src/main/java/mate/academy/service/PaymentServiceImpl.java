@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import mate.academy.dto.payment.PaymentCancelResponseDto;
 import mate.academy.dto.payment.PaymentDto;
 import mate.academy.mapper.PaymentMapper;
 import mate.academy.model.Booking;
@@ -145,9 +146,12 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public String handlePaymentCancel(String sessionId) {
+    public PaymentCancelResponseDto handlePaymentCancel(String sessionId) {
         Payment payment = getPaymentBySessionId(sessionId);
         updatePaymentStatus(payment.getId(), Payment.PaymentStatus.CANCELLED);
-        return "Payment cancelled for session: " + sessionId;
+        return new PaymentCancelResponseDto(
+                "Your payment was cancelled. You can retry within 24 hours.",
+                payment.getSessionUrl()
+        );
     }
 }

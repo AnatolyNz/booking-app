@@ -3,6 +3,7 @@ package mate.academy.service;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import mate.academy.dto.payment.PaymentCancelResponseDto;
 import mate.academy.dto.payment.PaymentDto;
 import mate.academy.model.Payment;
 import org.springframework.data.domain.Pageable;
@@ -25,5 +26,5 @@ public interface PaymentService {
 
     String handlePaymentSuccess(String sessionId);
 
-    String handlePaymentCancel(String sessionId);
+    PaymentCancelResponseDto handlePaymentCancel(String sessionId);
 }

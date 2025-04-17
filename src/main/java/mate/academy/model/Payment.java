@@ -54,7 +54,8 @@ public class Payment {
         PENDING,
         PAID,
         FAILED,
-        CANCELLED
+        CANCELLED,
+        EXPIRED
     }
 
     public User getUser() {

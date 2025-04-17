@@ -16,6 +16,7 @@ public class PaymentDto {
         PENDING,
         PAID,
         FAILED,
-        CANCELLED
+        CANCELLED,
+        EXPIRED
     }
 }

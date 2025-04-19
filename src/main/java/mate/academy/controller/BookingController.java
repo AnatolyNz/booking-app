@@ -9,7 +9,6 @@ import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
 import mate.academy.exception.BookingAlreadyCancelledException;
 import mate.academy.exception.BookingAlreadyExistsException;
-import mate.academy.exception.RegistrationException;
 import mate.academy.model.Booking;
 import mate.academy.model.User;
 import mate.academy.service.BookingService;
@@ -29,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @Tag(name = "Booking management", description = "Endpoints for managing booking")
 @RequiredArgsConstructor
@@ -60,9 +60,12 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BookingDto createBooking(@RequestBody @Valid CreateBookingRequestDto request)
-            throws RegistrationException {
-        return bookingService.createBooking(request);
+    public BookingDto createBooking(@RequestBody @Valid CreateBookingRequestDto request) {
+        try {
+            return bookingService.createBooking(request);
+        } catch (IllegalStateException ex) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, ex.getMessage());
+        }
     }
 
     @GetMapping("/{userId}/{status}")

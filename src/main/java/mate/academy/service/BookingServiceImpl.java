@@ -13,10 +13,14 @@ import mate.academy.exception.EntityNotFoundException;
 import mate.academy.mapper.BookingMapper;
 import mate.academy.model.Accommodation;
 import mate.academy.model.Booking;
+import mate.academy.model.User;
+import mate.academy.repository.PaymentRepository;
 import mate.academy.repository.booking.BookingRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +30,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingMapper bookingMapper;
     private final BookingRepository bookingRepository;
     private final NotificationService notificationService;
+    private final PaymentRepository paymentRepository;
 
     @Override
     public BookingDto getBookingById(Long id) {
@@ -49,9 +54,18 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto createBooking(CreateBookingRequestDto createBookingRequestDto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Long accommodationId = createBookingRequestDto.getAccommodationId();
         LocalDate checkInDate = createBookingRequestDto.getCheckInDate();
         LocalDate checkOutDate = createBookingRequestDto.getCheckOutDate();
+
+        User currentUser = (User) authentication.getPrincipal();
+
+        long pendingPayments = paymentRepository.countPendingPaymentsByUserId(currentUser.getId());
+        if (pendingPayments > 0) {
+            throw new IllegalStateException("You have pending payments. "
+                    + "Please pay them before booking.");
+        }
 
         boolean isBooked = false;
         for (LocalDate date = checkInDate; !date.isAfter(checkOutDate); date = date.plusDays(1)) {
@@ -69,6 +83,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         Booking booking = bookingMapper.toEntity(createBookingRequestDto);
+        booking.setUser(currentUser);
 
         Booking savedBooking = bookingRepository.save(booking);
 

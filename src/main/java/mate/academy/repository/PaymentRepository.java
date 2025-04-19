@@ -19,4 +19,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Page<Payment> findAllByUserId(@Param("userId") Long userId, Pageable pageable);
 
     List<Payment> findAllByStatus(Payment.PaymentStatus status);
+
+    @Query("SELECT COUNT(p) FROM Payment p WHERE p.booking.user.id "
+            + "= :userId AND p.status = 'PENDING'")
+    long countPendingPaymentsByUserId(@Param("userId") Long userId);
 }

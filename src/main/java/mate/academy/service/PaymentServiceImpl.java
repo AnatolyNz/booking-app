@@ -34,6 +34,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final StripeCheckoutService stripeCheckoutService;
+    private final TelegramNotificationService telegramNotificationService;
 
     @Value("${STRIPE_SECRET_KEY}")
     private String stripeSecretKey;
@@ -147,6 +148,21 @@ public class PaymentServiceImpl implements PaymentService {
     public String handlePaymentSuccess(String sessionId) {
         Payment payment = getPaymentBySessionId(sessionId);
         updatePaymentStatus(payment.getId(), Payment.PaymentStatus.PAID);
+
+        String message = String.format(
+                "✅ *Payment Successful!*\n\n"
+                        + "*User:* %s %s\n"
+                        + "*Amount:* $%.2f\n"
+                        + "*Booking ID:* %d\n"
+                        + "*Session ID:* %s\n",
+                payment.getBooking().getUser().getFirstName(),
+                payment.getBooking().getUser().getLastName(),
+                payment.getAmountToPay(),
+                payment.getBooking().getId(),
+                sessionId
+        );
+        telegramNotificationService.sendMessage(null, message);
+
         return "Payment success for session: " + sessionId;
     }
 

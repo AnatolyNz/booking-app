@@ -29,6 +29,7 @@ public class TelegramNotificationService implements NotificationService {
         RequestBody body = new FormBody.Builder()
                 .add("chat_id", CHAT_ID)
                 .add("text", message)
+                .add("parse_mode", "Markdown")
                 .build();
 
         // Create the HTTP request

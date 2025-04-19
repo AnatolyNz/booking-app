@@ -1,5 +1,6 @@
 package mate.academy.controller;
 
+import com.stripe.exception.StripeException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -104,7 +106,49 @@ public class PaymentController {
     @Operation(summary = "Stripe cancel", description = "Handle cancelled Stripe payment")
     public ResponseEntity<PaymentCancelResponseDto> handlePaymentCancel(
             @RequestParam("session_id") String sessionId) {
-        PaymentCancelResponseDto response = paymentService.handlePaymentCancel(sessionId);
+        PaymentCancelResponseDto response = paymentService
+                .handlePaymentCancel(sessionId);
         return ResponseEntity.ok(response);
     }
+
+    @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/{paymentId}/renew")
+    @Operation(summary = "Renew payment session", description
+            = "Renew a Stripe Checkout session for an expired or cancelled payment")
+    public ResponseEntity<PaymentResponseDto> renewPaymentSession(
+            @PathVariable Long paymentId,
+            HttpServletRequest request) throws StripeException {
+
+        String baseUrl = UriComponentsBuilder.newInstance()
+                .scheme(request.getScheme())
+                .host(request.getServerName())
+                .port(request.getServerPort())
+                .build()
+                .toUriString();
+
+        String successUrl = UriComponentsBuilder.fromUriString(baseUrl)
+                .path("/api/payments/success")
+                .queryParam("session_id", "{CHECKOUT_SESSION_ID}")
+                .build()
+                .toUriString();
+
+        String cancelUrl = UriComponentsBuilder.fromUriString(baseUrl)
+                .path("/api/payments/cancel")
+                .queryParam("session_id", "{CHECKOUT_SESSION_ID}")
+                .build()
+                .toUriString();
+
+        Payment payment = paymentService.renewPaymentSession(paymentId, successUrl, cancelUrl);
+
+        PaymentResponseDto responseDto = new PaymentResponseDto(
+                payment.getSessionId(),
+                payment.getSessionUrl(),
+                payment.getBooking().getId(),
+                payment.getAmountToPay(),
+                payment.getStatus().name()
+        );
+
+        return ResponseEntity.ok(responseDto);
+    }
+
 }

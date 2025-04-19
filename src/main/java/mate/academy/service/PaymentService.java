@@ -1,5 +1,6 @@
 package mate.academy.service;
 
+import com.stripe.exception.StripeException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -27,4 +28,7 @@ public interface PaymentService {
     String handlePaymentSuccess(String sessionId);
 
     PaymentCancelResponseDto handlePaymentCancel(String sessionId);
+
+    Payment renewPaymentSession(Long paymentId, String successUrl, String cancelUrl)
+            throws StripeException;
 }

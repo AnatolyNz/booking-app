@@ -1,6 +1,7 @@
 package mate.academy.service;
 
 import com.stripe.Stripe;
+import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import jakarta.annotation.PostConstruct;
@@ -8,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentMapper paymentMapper;
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
+    private final StripeCheckoutService stripeCheckoutService;
 
     @Value("${STRIPE_SECRET_KEY}")
     private String stripeSecretKey;
@@ -69,7 +72,9 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     public Payment getPaymentBySessionId(String sessionId) {
-        return paymentRepository.findBySessionId(sessionId);
+        return Optional.ofNullable(paymentRepository.findBySessionId(sessionId))
+                .orElseThrow(() -> new RuntimeException("Payment not found with session ID: "
+                        + sessionId));
     }
 
     public List<PaymentDto> getPaymentsByUserId(Long userId, Pageable pageable) {
@@ -153,5 +158,36 @@ public class PaymentServiceImpl implements PaymentService {
                 "Your payment was cancelled. You can retry within 24 hours.",
                 payment.getSessionUrl()
         );
+    }
+
+    public Payment renewPaymentSession(Long paymentId, String successUrl,
+                                       String cancelUrl) throws StripeException {
+        Payment existingPayment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+
+        if (existingPayment.getStatus() != Payment.PaymentStatus.CANCELLED
+                && existingPayment.getStatus() != Payment.PaymentStatus.EXPIRED) {
+            throw new RuntimeException("Only CANCELLED or EXPIRED payments can be renewed");
+        }
+
+        Booking booking = existingPayment.getBooking();
+        BigDecimal amountToPay = existingPayment.getAmountToPay();
+
+        Session newSession = stripeCheckoutService.createCheckoutSession(
+                successUrl,
+                cancelUrl,
+                amountToPay.multiply(BigDecimal.valueOf(100)).longValue(), // Stripe uses cents
+                "usd",
+                String.valueOf(booking.getId())
+        );
+
+        Payment newPayment = new Payment();
+        newPayment.setBooking(booking);
+        newPayment.setStatus(Payment.PaymentStatus.PENDING);
+        newPayment.setAmountToPay(amountToPay);
+        newPayment.setSessionId(newSession.getId());
+        newPayment.setSessionUrl(newSession.getUrl());
+
+        return paymentRepository.save(newPayment);
     }
 }

@@ -32,7 +32,6 @@ public class Accommodation {
     private Long id;
 
     @OneToMany(mappedBy = "accommodation", fetch = FetchType.EAGER)
-    //@OneToMany(mappedBy = "accommodation")
     private List<Booking> bookings;
 
     @Column(nullable = false)

@@ -11,11 +11,11 @@ databaseChangeLog:
             tableName: accommodations
             columns:
               - column: { name: type, value: 'HOUSE' }
-              - column: { name: location, value: '123 Ocean Drive, Miami' }
-              - column: { name: size, value: '3 Bedroom' }
-              - column: { name: amenities, value: '{WiFi, Air Conditioning, Swimming Pool, Parking, Kitchen}' }
-              - column: { name: price, valueNumeric: 250.00 }
-              - column: { name: daily_rate, valueNumeric: 250.00 }
+              - column: { name: location, value: 'Kyiv' }
+              - column: { name: size, value: 'LARGE' }
+              - column: { name: amenities, value: '{WiFi, TV}' }
+              - column: { name: price, valueNumeric: 1000.00 }
+              - column: { name: daily_rate, valueNumeric: 1000.00 }
               - column: { name: availability, valueNumeric: 5 }
               - column: { name: is_deleted, value: false }   # Provide a value for is_deleted
         - insert:

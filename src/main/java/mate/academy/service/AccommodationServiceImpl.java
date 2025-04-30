@@ -1,6 +1,5 @@
 package mate.academy.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +7,7 @@ import mate.academy.dto.accommodation.AccommodationDto;
 import mate.academy.dto.accommodation.AccommodationSearchParameters;
 import mate.academy.dto.accommodation.CreateAccommodationRequestDto;
 import mate.academy.dto.accommodation.UpdateAccommodationRequestDto;
+import mate.academy.exception.EntityNotFoundException;
 import mate.academy.mapper.AccommodationMapper;
 import mate.academy.model.Accommodation;
 import mate.academy.repository.accommodation.AccommodationRepository;

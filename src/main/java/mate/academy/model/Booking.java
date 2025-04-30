@@ -12,17 +12,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import lombok.Data;
-import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.FilterDef;
-import org.hibernate.annotations.ParamDef;
-import org.hibernate.annotations.SQLDelete;
 
 @Entity
 @Data
-@SQLDelete(sql = "UPDATE booking SET is_deleted = true WHERE id=?")
-@FilterDef(name = "bookingSoftDeleteFilter", parameters = @ParamDef(name = "isDeleted",
-        type = Boolean.class))
-@Filter(name = "bookingSoftDeleteFilter", condition = "is_deleted = :isDeleted")
 @Table(name = "booking")
 public class Booking {
     @Id

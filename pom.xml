@@ -28,6 +28,7 @@
     </scm>
     <properties>
         <java.version>17</java.version>
+        <testcontainers.version>1.18.0</testcontainers.version>
         <maven.checkstyle.plugin.configLocation> https://raw.githubusercontent.com/mate-academy/style-guides/master/java/checkstyle.xml </maven.checkstyle.plugin.configLocation>
         <jjwt.version>0.11.5</jjwt.version>
     </properties>
@@ -69,6 +70,17 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.20.6</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>jakarta.persistence</groupId>
@@ -140,7 +152,17 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
-
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <build>
         <plugins>
             <plugin>

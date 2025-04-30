@@ -111,12 +111,15 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto updateBooking(Long id, CreateBookingRequestDto request) {
-        Booking booking = bookingRepository.findById(id).orElseThrow(() ->
-                new BookingNotFoundException(id));
-
         Long accommodationId = request.getAccommodationId();
         LocalDate newCheckInDate = request.getCheckInDate();
         LocalDate newCheckOutDate = request.getCheckOutDate();
+        if (newCheckInDate == null || newCheckOutDate == null) {
+            throw new IllegalArgumentException(
+                    "Check-in and check-out dates cannot be null.");
+        }
+        Booking booking = bookingRepository.findById(id).orElseThrow(() ->
+                new BookingNotFoundException(id));
 
         boolean isBooked = false;
         for (LocalDate date = newCheckInDate;
@@ -143,6 +146,11 @@ public class BookingServiceImpl implements BookingService {
     public void cancelBooking(Long id) {
         Booking booking = bookingRepository.findById(id).orElseThrow(() ->
                 new BookingNotFoundException(id));
+
+        if (booking.getAccommodation() == null) {
+            throw new IllegalStateException("Booking must have an accommodation");
+        }
+
         if (booking.getStatus() == Booking.BookingStatus.valueOf("CANCELED")) {
             throw new BookingAlreadyCancelledException("This booking has already been canceled.");
         }

@@ -8,45 +8,43 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TelegramNotificationService implements NotificationService {
 
-    private static final String BOT_TOKEN = System.getenv("BOT_TOKEN");
-    private static final String CHAT_ID = System.getenv("CHAT_ID");
-    private static final String API_URL = "https://api.telegram.org/bot" + BOT_TOKEN + "/sendMessage";
-
     private final OkHttpClient client;
+    private final String botToken;
+    private final String chatId;
 
-    public TelegramNotificationService() {
-        this.client = new OkHttpClient();
+    public TelegramNotificationService(OkHttpClient client,
+                                       @Value("${BOT_TOKEN}") String botToken,
+                                       @Value("${CHAT_ID}") String chatId) {
+        this.client = client;
+        this.botToken = botToken;
+        this.chatId = chatId;
     }
 
     @Override
     public void sendMessage(String recipient, String message) {
-        // Create the request body with the parameters
         RequestBody body = new FormBody.Builder()
-                .add("chat_id", CHAT_ID)
+                .add("chat_id", chatId)
                 .add("text", message)
                 .add("parse_mode", "Markdown")
                 .build();
 
-        // Create the HTTP request
+        String apiUrl = "https://api.telegram.org/bot" + botToken + "/sendMessage";
+
         Request request = new Request.Builder()
-                .url(API_URL)
+                .url(apiUrl)
                 .post(body)
                 .build();
 
-        // Execute the request asynchronously
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    System.out.println("Message sent successfully!");
-                } else {
-                    System.out.println("Failed to send message: " + response.message());
-                }
+                System.out.println("Message sent successfully!");
             }
 
             @Override

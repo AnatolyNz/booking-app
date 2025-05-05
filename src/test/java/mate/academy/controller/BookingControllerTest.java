@@ -8,6 +8,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -174,5 +175,45 @@ public class BookingControllerTest {
     void getBookings_Unauthenticated_ShouldReturnUnauthorized() throws Exception {
         mockMvc.perform(get("/bookings"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @WithMockUser(username = "manager@example.com", roles = {"MANAGER"})
+    @Test
+    @DisplayName("Get bookings by user ID and status - success")
+    void getBookingsByUserIdAndStatus_ValidParams_ReturnsList() throws Exception {
+        mockMvc.perform(get("/bookings/{userId}/{status}", 1L, "PENDING")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @WithMockUser(username = "user@example.com", roles = {"USER"})
+    @Test
+    @DisplayName("Update booking - success")
+    void updateBooking_ValidRequest_ReturnsUpdatedBooking() throws Exception {
+        CreateBookingRequestDto request = new CreateBookingRequestDto();
+        request.setUserId(1L);
+        request.setAccommodationId(1L);
+        request.setCheckInDate(LocalDate.now().plusDays(15));
+        request.setCheckOutDate(LocalDate.now().plusDays(17));
+        request.setStatus(CreateBookingRequestDto.BookingStatus.CONFIRMED);
+
+        User mockUser = new User();
+        mockUser.setId(1L);
+        mockUser.setEmail("user@example.com");
+        mockUser.setPassword("password");
+        mockUser.setRole(User.UserRole.USER);
+
+        when(userService.findByEmail("user@example.com")).thenReturn(Optional.of(mockUser));
+
+        String jsonRequest = objectMapper.writeValueAsString(request);
+        mockMvc.perform(put("/bookings/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonRequest))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.status").value("CONFIRMED"));
     }
 }

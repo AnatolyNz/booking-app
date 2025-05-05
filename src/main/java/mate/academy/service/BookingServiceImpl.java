@@ -19,8 +19,6 @@ import mate.academy.repository.booking.BookingRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,48 +51,43 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public BookingDto createBooking(CreateBookingRequestDto createBookingRequestDto) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Long accommodationId = createBookingRequestDto.getAccommodationId();
-        LocalDate checkInDate = createBookingRequestDto.getCheckInDate();
-        LocalDate checkOutDate = createBookingRequestDto.getCheckOutDate();
-
-        User currentUser = (User) authentication.getPrincipal();
-
-        long pendingPayments = paymentRepository.countPendingPaymentsByUserId(currentUser.getId());
+    public BookingDto createBooking(CreateBookingRequestDto request, User user) {
+        // Check pending payments
+        long pendingPayments = paymentRepository.countPendingPaymentsByUserId(user.getId());
         if (pendingPayments > 0) {
-            throw new IllegalStateException("You have pending payments. "
-                    + "Please pay them before booking.");
+            throw new IllegalStateException(
+                    "You have pending payments. Please pay them before booking.");
         }
 
-        boolean isBooked = false;
-        for (LocalDate date = checkInDate; !date.isAfter(checkOutDate); date = date.plusDays(1)) {
-            if (bookingRepository
-                    .existsByAccommodationIdAndCheckInDateBeforeAndCheckOutDateAfter(
-                            accommodationId, date, date)) {
-                isBooked = true;
-                break;
+        // Check for date conflicts
+        for (LocalDate date = request.getCheckInDate();
+                     !date.isAfter(request.getCheckOutDate());
+                     date = date.plusDays(1)) {
+            boolean isBooked = bookingRepository
+                     .existsByAccommodationIdAndCheckInDateBeforeAndCheckOutDateAfter(
+                     request.getAccommodationId(), date, date);
+            if (isBooked) {
+                throw new BookingAlreadyExistsException(
+                        "Accommodation is already booked during the selected period");
             }
         }
 
-        if (isBooked) {
-            throw new BookingAlreadyExistsException(
-                    "Accommodation is already booked during the selected period");
-        }
+        // Map and set user
+        Booking booking = bookingMapper.toEntity(request);
+        booking.setUser(user);
 
-        Booking booking = bookingMapper.toEntity(createBookingRequestDto);
-        booking.setUser(currentUser);
-
+        // Save and return DTO
         Booking savedBooking = bookingRepository.save(booking);
 
+        // Send notification
         String message = String.format(
-                "New booking created:\nUser: %s\nAccommodation: "
-                        + "%s\nCheck-in: %s\nCheck-out: %s",
+                "New booking created:\nUser: %s\nAccommodation: %s\nCheck-in: %s\nCheck-out: %s",
                 savedBooking.getUser().getUsername(),
                 savedBooking.getAccommodation().getLocation(),
                 savedBooking.getCheckInDate(),
-                savedBooking.getCheckOutDate());
-        notificationService.sendMessage(savedBooking.getUser().getUsername(), message);
+                savedBooking.getCheckOutDate()
+        );
+        notificationService.sendMessage(user.getUsername(), message);
 
         return bookingMapper.toDto(savedBooking);
     }

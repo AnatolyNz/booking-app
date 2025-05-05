@@ -120,19 +120,18 @@ public class BookingServiceTest {
     @DisplayName("Verify createBooking creates and returns a valid "
             + "booking using dates from CreateBookingRequestDto")
     void createBooking_WithUserDatesFromDto_ShouldReturnCreatedBooking() {
-        Long userId = 1L;
         Long accommodationId = 100L;
 
         LocalDate checkInDate = LocalDate.now().plusDays(2);
         LocalDate checkOutDate = LocalDate.now().plusDays(5);
 
         CreateBookingRequestDto requestDto = new CreateBookingRequestDto();
-        requestDto.setUserId(userId);
         requestDto.setAccommodationId(accommodationId);
         requestDto.setCheckInDate(checkInDate);
         requestDto.setCheckOutDate(checkOutDate);
         requestDto.setStatus(CreateBookingRequestDto.BookingStatus.PENDING);
 
+        Long userId = 1L;
         User mockUser = new User();
         mockUser.setId(userId);
         mockUser.setEmail("user@example.com");
@@ -179,7 +178,7 @@ public class BookingServiceTest {
         when(bookingMapper.toEntity(requestDto)).thenReturn(new Booking());
         when(bookingMapper.toDto(savedBooking)).thenReturn(bookingDto);
 
-        BookingDto result = bookingService.createBooking(requestDto);
+        BookingDto result = bookingService.createBooking(requestDto, mockUser);
 
         assertNotNull(result);
         assertEquals(checkInDate, result.getCheckInDate());
@@ -199,7 +198,6 @@ public class BookingServiceTest {
         Booking booking = new Booking();
         booking.setId(id);
         request.setAccommodationId(1L);
-        request.setUserId(1L);
         request.setCheckInDate(LocalDate.of(2025, 5, 1));
         request.setCheckOutDate(LocalDate.of(2025, 5, 5));
         request.setStatus(CreateBookingRequestDto.BookingStatus.CONFIRMED);

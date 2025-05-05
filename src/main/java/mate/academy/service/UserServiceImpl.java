@@ -1,5 +1,6 @@
 package mate.academy.service;
 
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import mate.academy.dto.user.UserRegistrationRequestDto;
 import mate.academy.dto.user.UserResponseDto;
@@ -37,5 +38,10 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
         return userMapper.toDto(savedUser);
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 }

@@ -12,11 +12,14 @@ import mate.academy.exception.BookingAlreadyExistsException;
 import mate.academy.model.Booking;
 import mate.academy.model.User;
 import mate.academy.service.BookingService;
+import mate.academy.service.UserService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,17 +39,19 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping(value = "/bookings")
 public class BookingController {
     private final BookingService bookingService;
+    private final UserService userService;
 
     @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     @GetMapping("/my")
-    @Operation(summary = "Get all booking", description = "Get a list of all available bookings")
+    @Operation(summary = "Get all bookings", description = "Get a list of all available bookings")
     public List<BookingDto> getAllBookings(Authentication authentication,
                                            Pageable pageable,
-                                           @RequestParam(value = "userId", required = false)
-                                               Long userId) {
-        User currentUser = (User) authentication.getPrincipal();
-        if (currentUser.getAuthorities().contains(new SimpleGrantedAuthority(
-                "ROLE_ADMIN")) && userId != null) {
+                                           @RequestParam(value = "userId",
+                                                   required = false) Long userId) {
+        boolean isAdmin = authentication.getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+
+        if (isAdmin && userId != null) {
             return bookingService.getBookingsByUserId(userId, pageable);
         } else {
             return bookingService.getAllBookingsWithoutUserId(pageable);
@@ -60,9 +65,16 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BookingDto createBooking(@RequestBody @Valid CreateBookingRequestDto request) {
+    public BookingDto createBooking(@RequestBody @Valid CreateBookingRequestDto request,
+                                    Authentication authentication) {
+        UserDetails principal = (UserDetails) authentication.getPrincipal();
+        String email = principal.getUsername();
+
+        User user = userService.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
         try {
-            return bookingService.createBooking(request);
+            return bookingService.createBooking(request, user);
         } catch (IllegalStateException ex) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, ex.getMessage());
         }

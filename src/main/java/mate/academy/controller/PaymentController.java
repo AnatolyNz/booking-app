@@ -11,12 +11,11 @@ import mate.academy.dto.payment.PaymentCancelResponseDto;
 import mate.academy.dto.payment.PaymentDto;
 import mate.academy.dto.payment.PaymentResponseDto;
 import mate.academy.model.Payment;
-import mate.academy.model.User;
 import mate.academy.service.PaymentService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,17 +38,18 @@ public class PaymentController {
 
     @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     @GetMapping()
-    @Operation(summary = "Retrieve payments", description = "Get payment information "
-            + "for users or all payments for admins")
-    public List<PaymentDto> getPayments(@AuthenticationPrincipal User currentUser,
+    @Operation(summary = "Retrieve payments", description =
+            "Get payment information for users or all payments for admins")
+    public List<PaymentDto> getPayments(Authentication authentication,
                                         @RequestParam(value = "userId",
                                                 required = false) Long userId,
                                         Pageable pageable) {
-        if (currentUser.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))
-                && userId != null) {
+        boolean isAdmin = authentication.getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        if (isAdmin && userId == null) {
             return paymentService.getAllPayments(pageable);
         } else {
-            return paymentService.getPaymentsByUserId(currentUser.getId(), pageable);
+            return paymentService.getPaymentsByUserId(userId, pageable);
         }
     }
 

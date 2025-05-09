@@ -80,6 +80,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     public List<PaymentDto> getPaymentsByUserId(Long userId, Pageable pageable) {
         Page<Payment> payments = paymentRepository.findAllByUserId(userId, pageable);
+        System.out.println("payments: " + payments);
         return payments.stream().map(payment -> paymentMapper.toDto(payment))
                 .collect(Collectors.toList());
     }
@@ -99,15 +100,12 @@ public class PaymentServiceImpl implements PaymentService {
             Long bookingId = (Long) (bookingDetails.get("bookingId") instanceof Integer
                     ? Long.valueOf((Integer) bookingDetails.get("bookingId"))
                     : bookingDetails.get("bookingId"));
-
             Booking booking = bookingRepository.findById(bookingId)
                     .orElseThrow(() -> new RuntimeException("Booking not found"));
-
             BigDecimal amount = booking.getAccommodation().getDailyRate()
                     .multiply(BigDecimal.valueOf(ChronoUnit.DAYS.between(
                             booking.getCheckInDate(), booking.getCheckOutDate())));
             Long amountInCents = amount.multiply(BigDecimal.valueOf(100)).longValue();
-
             SessionCreateParams params = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.PAYMENT)
                     .setSuccessUrl(successUrl)
@@ -130,12 +128,10 @@ public class PaymentServiceImpl implements PaymentService {
                                                     .build())
                                     .build())
                     .build();
-
             Session session = Session.create(params);
-
             Payment payment = initiatePayment(bookingId, session.getUrl(), amount);
+
             payment.setSessionId(session.getId());
-            paymentRepository.save(payment);
 
             return paymentRepository.save(payment);
         } catch (Exception e) {

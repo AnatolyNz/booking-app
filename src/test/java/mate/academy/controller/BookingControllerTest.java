@@ -3,6 +3,10 @@ package mate.academy.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -15,12 +19,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Connection;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
+import mate.academy.exception.BookingAlreadyCancelledException;
 import mate.academy.model.User;
+import mate.academy.repository.PaymentRepository;
+import mate.academy.service.BookingService;
 import mate.academy.service.UserService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +63,12 @@ public class BookingControllerTest {
     private DataSource dataSource;
 
     @MockBean
+    private BookingService bookingService;
+
+    @MockBean
+    private PaymentRepository paymentRepository;
+
+    @MockBean
     private UserService userService;
 
     @BeforeEach
@@ -73,6 +87,11 @@ public class BookingControllerTest {
                     new ClassPathResource("database/bookings/add-bookings-all.sql")
             );
         }
+    }
+
+    @AfterEach
+    void resetMocks() {
+        reset(bookingService, userService);
     }
 
     @AfterEach
@@ -95,14 +114,32 @@ public class BookingControllerTest {
     @Test
     @DisplayName("Get all bookings")
     void getAllBookings_ReturnsList() throws Exception {
+        // Given: Mock user and service behavior
+        BookingDto mockBooking = new BookingDto();
+        mockBooking.setId(1L);
+        mockBooking.setStatus(BookingDto.BookingStatus.PENDING);
+        List<BookingDto> bookingList = List.of(mockBooking);
+        BookingDto mockBookingWithoutUserId = new BookingDto();
+        mockBookingWithoutUserId.setStatus(BookingDto.BookingStatus.PENDING);
+        List<BookingDto> bookingListWithoutUserId = List.of(mockBookingWithoutUserId);
+
+        when(bookingService.getBookingsByUserId(any(), any()))
+                .thenReturn(bookingList);
+
+        when(bookingService.getAllBookingsWithoutUserId(any()))
+                .thenReturn(bookingListWithoutUserId);
+
         MvcResult result = mockMvc.perform(get("/bookings/my")
+                        .param("page", "0")
+                        .param("size", "5")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String responseBody = result.getResponse().getContentAsString();
-        BookingDto[] bookings = objectMapper.readValue(responseBody, BookingDto[].class);
+        System.out.println("Response Body: " + responseBody);
 
+        BookingDto[] bookings = objectMapper.readValue(responseBody, BookingDto[].class);
         assertTrue(bookings.length > 0);
     }
 
@@ -123,11 +160,18 @@ public class BookingControllerTest {
     @Test
     @DisplayName("Get booking by ID - success")
     void getBookingById_ValidId_Success() throws Exception {
+        BookingDto mockBooking = new BookingDto();
+        mockBooking.setId(1L);
+        mockBooking.setStatus(BookingDto.BookingStatus.PENDING);
+
+        when(bookingService.getBookingById(1L)).thenReturn(mockBooking);
+
         MvcResult result = mockMvc.perform(get("/bookings/{id}", 1))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String responseBody = result.getResponse().getContentAsString();
+
         BookingDto actual = objectMapper.readValue(responseBody, BookingDto.class);
 
         assertNotNull(actual);
@@ -206,7 +250,15 @@ public class BookingControllerTest {
         mockUser.setPassword("password");
         mockUser.setRole(User.UserRole.USER);
 
-        when(userService.findByEmail("user@example.com")).thenReturn(Optional.of(mockUser));
+        BookingDto mockBooking = new BookingDto();
+        mockBooking.setId(1L);
+        mockBooking.setStatus(BookingDto.BookingStatus.CONFIRMED);
+
+        when(userService.findByEmail("user@example.com"))
+                .thenReturn(Optional.of(mockUser));
+
+        when(bookingService.updateBooking(eq(1L), any(CreateBookingRequestDto.class)))
+                .thenReturn(mockBooking);
 
         String jsonRequest = objectMapper.writeValueAsString(request);
         mockMvc.perform(put("/bookings/{id}", 1L)
@@ -215,5 +267,17 @@ public class BookingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.status").value("CONFIRMED"));
+    }
+
+    @WithMockUser(username = "user@example.com", roles = {"USER"})
+    @Test
+    @DisplayName("Cancel booking - already cancelled exception")
+    void cancelBooking_AlreadyCancelled_ShouldReturnBadRequest() throws Exception {
+        doThrow(new BookingAlreadyCancelledException("Booking already cancelled"))
+                .when(bookingService).cancelBooking(1L);
+
+        mockMvc.perform(delete("/bookings/{id}", 1L))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Booking already cancelled"));
     }
 }

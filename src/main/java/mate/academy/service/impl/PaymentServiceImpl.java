@@ -1,4 +1,4 @@
-package mate.academy.service;
+package mate.academy.service.impl;
 
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
@@ -15,11 +15,15 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import mate.academy.dto.payment.PaymentCancelResponseDto;
 import mate.academy.dto.payment.PaymentDto;
+import mate.academy.exception.EntityNotFoundException;
 import mate.academy.mapper.PaymentMapper;
 import mate.academy.model.Booking;
 import mate.academy.model.Payment;
 import mate.academy.repository.PaymentRepository;
 import mate.academy.repository.booking.BookingRepository;
+import mate.academy.service.PaymentService;
+import mate.academy.service.StripeCheckoutService;
+import mate.academy.service.TelegramNotificationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +48,7 @@ public class PaymentServiceImpl implements PaymentService {
         Stripe.apiKey = stripeSecretKey;
     }
 
+    @Override
     @Transactional
     public Payment initiatePayment(Long bookingId,
                                    String sessionUrl,
@@ -64,23 +69,25 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentRepository.save(payment);
     }
 
+    @Override
     @Transactional
     public Payment updatePaymentStatus(Long paymentId, Payment.PaymentStatus status) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Payment not found"));
         payment.setStatus(status);
         return paymentRepository.save(payment);
     }
 
+    @Override
     public Payment getPaymentBySessionId(String sessionId) {
         return Optional.ofNullable(paymentRepository.findBySessionId(sessionId))
                 .orElseThrow(() -> new RuntimeException("Payment not found with session ID: "
                         + sessionId));
     }
 
+    @Override
     public List<PaymentDto> getPaymentsByUserId(Long userId, Pageable pageable) {
         Page<Payment> payments = paymentRepository.findAllByUserId(userId, pageable);
-        System.out.println("payments: " + payments);
         return payments.stream().map(payment -> paymentMapper.toDto(payment))
                 .collect(Collectors.toList());
     }
@@ -135,7 +142,6 @@ public class PaymentServiceImpl implements PaymentService {
 
             return paymentRepository.save(payment);
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException("Stripe session creation failed");
         }
     }
@@ -172,6 +178,7 @@ public class PaymentServiceImpl implements PaymentService {
         );
     }
 
+    @Override
     public Payment renewPaymentSession(Long paymentId, String successUrl,
                                        String cancelUrl) throws StripeException {
         Payment existingPayment = paymentRepository.findById(paymentId)
@@ -188,7 +195,7 @@ public class PaymentServiceImpl implements PaymentService {
         Session newSession = stripeCheckoutService.createCheckoutSession(
                 successUrl,
                 cancelUrl,
-                amountToPay.multiply(BigDecimal.valueOf(100)).longValue(), // Stripe uses cents
+                amountToPay.multiply(BigDecimal.valueOf(100)).longValue(),
                 "usd",
                 String.valueOf(booking.getId())
         );

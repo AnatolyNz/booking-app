@@ -4,7 +4,6 @@ import java.util.List;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
 import mate.academy.model.Booking;
-import mate.academy.model.User;
 import org.springframework.data.domain.Pageable;
 
 public interface BookingService {
@@ -14,7 +13,7 @@ public interface BookingService {
 
     List<BookingDto> getAllBookingsWithoutUserId(Pageable pageable);
 
-    BookingDto createBooking(CreateBookingRequestDto bookingDto, User user);
+    BookingDto createBooking(CreateBookingRequestDto bookingDto, Long userId);
 
     List<BookingDto> getBookingsByUserIdAndStatus(Long userId,
                                                   Booking.BookingStatus status, Pageable pageable);

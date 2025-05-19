@@ -1,7 +1,6 @@
-package mate.academy.service;
+package mate.academy.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import mate.academy.dto.accommodation.AccommodationDto;
 import mate.academy.dto.accommodation.AccommodationSearchParameters;
@@ -12,9 +11,13 @@ import mate.academy.mapper.AccommodationMapper;
 import mate.academy.model.Accommodation;
 import mate.academy.repository.accommodation.AccommodationRepository;
 import mate.academy.repository.accommodation.AccommodationSpecificationBuilder;
+import mate.academy.service.AccommodationService;
+import mate.academy.service.NotificationService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +28,7 @@ public class AccommodationServiceImpl implements AccommodationService {
     private final NotificationService notificationService;
 
     @Override
+    @Transactional
     public AccommodationDto save(CreateAccommodationRequestDto createAccommodationRequestDto) {
         Accommodation accommodation = accommodationMapper.toModel(createAccommodationRequestDto);
         Accommodation savedAccommodation = accommodationRepository.save(accommodation);
@@ -41,10 +45,9 @@ public class AccommodationServiceImpl implements AccommodationService {
     }
 
     @Override
-    public List<AccommodationDto> findAll(Pageable pageable) {
-        return accommodationRepository.findAll(pageable).stream()
-                .map(accommodationMapper::toDto)
-                .collect(Collectors.toList());
+    public Page<AccommodationDto> findAll(Pageable pageable) {
+        return accommodationRepository.findAll(pageable)
+                .map(accommodationMapper::toDto);
     }
 
     @Override
@@ -55,14 +58,30 @@ public class AccommodationServiceImpl implements AccommodationService {
     }
 
     @Override
-    public void updateById(Long id, UpdateAccommodationRequestDto updateAccommodationRequestDto) {
-        Accommodation accommodation = accommodationMapper
-                .toModel(new CreateAccommodationRequestDto());
-        accommodation.setId(id);
-        accommodationRepository.save(accommodation);
+    @Transactional
+    public AccommodationDto updateById(Long id, UpdateAccommodationRequestDto
+            updateAccommodationRequestDto) {
+        Accommodation accommodation = accommodationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Accommodation not found with id: " + id));
+
+        accommodation.setLocation(updateAccommodationRequestDto.getLocation());
+        accommodation.setSize(updateAccommodationRequestDto.getSize());
+        accommodation.setAmenities(updateAccommodationRequestDto.getAmenities());
+        accommodation.setPrice(updateAccommodationRequestDto.getPrice());
+        accommodation.setAvailability(updateAccommodationRequestDto.getAvailability());
+        accommodation.setDailyRate(updateAccommodationRequestDto.getDailyRate());
+        accommodation.setType(updateAccommodationRequestDto.getType());
+
+        Accommodation updated = accommodationRepository.save(accommodation);
+        if (updated == null) {
+            throw new IllegalStateException("Failed to save updated accommodation");
+        }
+        return accommodationMapper.toDto(updated);
     }
 
     @Override
+    @Transactional
     public void deleteById(Long id) {
         accommodationRepository.deleteById(id);
 

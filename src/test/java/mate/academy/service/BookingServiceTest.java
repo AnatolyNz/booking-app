@@ -19,11 +19,13 @@ import mate.academy.dto.booking.CreateBookingRequestDto;
 import mate.academy.mapper.BookingMapper;
 import mate.academy.model.Accommodation;
 import mate.academy.model.Booking;
+import mate.academy.model.Role;
 import mate.academy.model.User;
 import mate.academy.repository.PaymentRepository;
 import mate.academy.repository.UserRepository;
 import mate.academy.repository.accommodation.AccommodationRepository;
 import mate.academy.repository.booking.BookingRepository;
+import mate.academy.service.impl.BookingServiceImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -141,7 +143,10 @@ public class BookingServiceTest {
         testUser.setId(1L);
         testUser.setEmail("user@example.com");
         testUser.setPassword("password");
-        testUser.setRole(User.UserRole.USER);
+
+        Role role = new Role();
+        role.setRoleName(Role.RoleName.USER);
+        testUser.setRole(role);
 
         SecurityContextHolder.setContext(
                 new SecurityContextImpl(new TestingAuthenticationToken(testUser, null))
@@ -173,12 +178,21 @@ public class BookingServiceTest {
         bookingDto.setCheckOutDate(checkOutDate);
         bookingDto.setStatus(BookingDto.BookingStatus.PENDING);
 
-        when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(mockUser));
         when(paymentRepository.countPendingPaymentsByUserId(userId)).thenReturn(0L);
-        when(bookingMapper.toEntity(requestDto)).thenReturn(new Booking());
-        when(bookingMapper.toDto(savedBooking)).thenReturn(bookingDto);
 
-        BookingDto result = bookingService.createBooking(requestDto, mockUser);
+        Booking bookingToSave = new Booking();
+        bookingToSave.setUser(mockUser); // must be set
+        bookingToSave.setCheckInDate(checkInDate);
+        bookingToSave.setCheckOutDate(checkOutDate);
+        bookingToSave.setAccommodation(mockAccommodation); // needed if notification uses it
+
+        when(bookingMapper.toEntity(requestDto)).thenReturn(bookingToSave);
+        when(bookingRepository.save(any(Booking.class))).thenReturn(bookingToSave);
+
+        when(bookingMapper.toDto(any(Booking.class))).thenReturn(bookingDto);
+
+        BookingDto result = bookingService.createBooking(requestDto, mockUser.getId());
 
         assertNotNull(result);
         assertEquals(checkInDate, result.getCheckInDate());
@@ -226,8 +240,11 @@ public class BookingServiceTest {
         user.setEmail("user@example.com");
         user.setFirstName("Test");
         user.setLastName("User");
-        user.setPassword("dummy"); // required due to non-null constraint
-        user.setRole(User.UserRole.USER); // required due to non-null constraint
+        user.setPassword("dummy");
+
+        Role role = new Role();
+        role.setRoleName(Role.RoleName.USER);
+        user.setRole(role);
 
         booking.setUser(user);
         accommodation.setLocation("Test Location");

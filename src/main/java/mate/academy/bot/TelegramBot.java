@@ -22,7 +22,6 @@ public class TelegramBot {
     }
 
     public static void sendNotification(String message) {
-        // OkHttp client setup
         OkHttpClient client = new OkHttpClient();
 
         // Create the request body with the parameters

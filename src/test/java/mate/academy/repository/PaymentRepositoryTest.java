@@ -10,6 +10,7 @@ import java.util.List;
 import mate.academy.model.Accommodation;
 import mate.academy.model.Booking;
 import mate.academy.model.Payment;
+import mate.academy.model.Role;
 import mate.academy.model.User;
 import mate.academy.repository.booking.BookingRepository;
 import org.junit.jupiter.api.Test;
@@ -21,8 +22,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
-@Sql(scripts = "classpath:database/cleanup.sql",
-        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = {
+        "classpath:database/cleanup.sql",
+        "classpath:database/insert_roles.sql"
+}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @SpringBootTest
 @AutoConfigureTestEntityManager
 @Transactional
@@ -37,12 +40,17 @@ public class PaymentRepositoryTest {
 
     @Test
     public void testFindBySessionId() {
+        Role role = entityManager.getEntityManager()
+                .createQuery("SELECT r FROM Role r WHERE r.roleName = :role", Role.class)
+                .setParameter("role", Role.RoleName.USER)
+                .getSingleResult();
+
         User user = new User();
         user.setEmail("email@example.com");
         user.setFirstName("First");
         user.setLastName("Last");
         user.setPassword("password");
-        user.setRole(User.UserRole.USER);
+        user.setRole(role); // use managed role
         entityManager.persistAndFlush(user);
 
         Accommodation accommodation = new Accommodation();
@@ -79,12 +87,17 @@ public class PaymentRepositoryTest {
 
     @Test
     public void testFindAllPayments() {
+        Role role = entityManager.getEntityManager()
+                .createQuery("SELECT r FROM Role r WHERE r.roleName = :role", Role.class)
+                .setParameter("role", Role.RoleName.USER)
+                .getSingleResult();
+
         User user = new User();
         user.setEmail("fan.zhen@example.com");
         user.setFirstName("Fan");
         user.setLastName("Zhen");
         user.setPassword("securepassword22");
-        user.setRole(User.UserRole.USER);
+        user.setRole(role); // use managed role
         entityManager.persistAndFlush(user);
 
         Accommodation accommodation = new Accommodation();
@@ -113,13 +126,12 @@ public class PaymentRepositoryTest {
         booking2.setStatus(Booking.BookingStatus.PENDING);
         entityManager.persistAndFlush(booking2);
 
-        // Create and persist Payment entities
         Payment payment1 = new Payment();
         payment1.setSessionId("session1");
         payment1.setAmountToPay(new BigDecimal("100.00"));
         payment1.setStatus(Payment.PaymentStatus.PENDING);
         payment1.setSessionUrl("http://example.com/session1");
-        payment1.setBooking(booking1); // Set the booking reference
+        payment1.setBooking(booking1);
         entityManager.persistAndFlush(payment1);
 
         Payment payment2 = new Payment();

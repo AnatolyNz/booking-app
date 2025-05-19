@@ -14,6 +14,7 @@ import mate.academy.model.Booking;
 import mate.academy.model.Payment;
 import mate.academy.repository.PaymentRepository;
 import mate.academy.repository.booking.BookingRepository;
+import mate.academy.service.impl.PaymentServiceImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

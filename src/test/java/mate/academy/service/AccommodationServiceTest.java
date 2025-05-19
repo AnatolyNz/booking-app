@@ -2,7 +2,6 @@ package mate.academy.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.contains;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -22,6 +21,7 @@ import mate.academy.mapper.AccommodationMapper;
 import mate.academy.model.Accommodation;
 import mate.academy.repository.accommodation.AccommodationRepository;
 import mate.academy.repository.accommodation.AccommodationSpecificationBuilder;
+import mate.academy.service.impl.AccommodationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -93,9 +93,10 @@ public class AccommodationServiceTest {
         when(accommodationMapper.toDto(acc1)).thenReturn(new AccommodationDto());
         when(accommodationMapper.toDto(acc2)).thenReturn(new AccommodationDto());
 
-        List<AccommodationDto> result = accommodationService.findAll(pageable);
+        Page<AccommodationDto> result = accommodationService.findAll(pageable);
 
-        assertEquals(2, result.size());
+        assertEquals(2, result.getContent().size());
+        assertEquals(2, result.getTotalElements());
     }
 
     @Test
@@ -126,19 +127,41 @@ public class AccommodationServiceTest {
     }
 
     @Test
-    @DisplayName("Verify updateById calls repository with new data")
+    @DisplayName("Verify updateById updates fields and calls repository")
     public void updateById_ShouldUpdateAccommodation() {
-        Long id = 1L;
         UpdateAccommodationRequestDto updateDto = new UpdateAccommodationRequestDto();
-        Accommodation newAccommodation = new Accommodation();
-        newAccommodation.setId(id);
+        updateDto.setLocation("New York");
+        updateDto.setSize("Large");
+        updateDto.setAmenities(List.of("WiFi", "TV"));
+        updateDto.setPrice(BigDecimal.valueOf(150.00));
+        updateDto.setAvailability(3);
+        updateDto.setDailyRate(BigDecimal.valueOf(100.00));
+        updateDto.setType(Accommodation.Type.APARTMENT);
 
-        when(accommodationMapper.toModel(any(CreateAccommodationRequestDto.class)))
-                .thenReturn(newAccommodation);
+        Long id = 1L;
+        Accommodation existingAccommodation = new Accommodation();
+        existingAccommodation.setId(id);
 
-        accommodationService.updateById(id, updateDto);
+        when(accommodationRepository.findById(id)).thenReturn(Optional.of(existingAccommodation));
 
-        verify(accommodationRepository).save(newAccommodation);
+        when(accommodationRepository.save(existingAccommodation)).thenReturn(existingAccommodation);
+
+        AccommodationDto dto = new AccommodationDto();
+        when(accommodationMapper.toDto(existingAccommodation)).thenReturn(dto);
+
+        AccommodationDto result = accommodationService.updateById(id, updateDto);
+
+        assertEquals(dto, result);
+
+        assertEquals("New York", existingAccommodation.getLocation());
+        assertEquals("Large", existingAccommodation.getSize());
+        assertEquals(List.of("WiFi", "TV"), existingAccommodation.getAmenities());
+        assertEquals(BigDecimal.valueOf(150.00), existingAccommodation.getPrice());
+        assertEquals(3, existingAccommodation.getAvailability());
+        assertEquals(BigDecimal.valueOf(100.00), existingAccommodation.getDailyRate());
+        assertEquals(Accommodation.Type.APARTMENT, existingAccommodation.getType());
+
+        verify(accommodationRepository).save(existingAccommodation);
     }
 
     @Test

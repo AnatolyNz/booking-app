@@ -1,4 +1,4 @@
-package mate.academy.service;
+package mate.academy.service.impl;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,7 +15,10 @@ import mate.academy.model.Accommodation;
 import mate.academy.model.Booking;
 import mate.academy.model.User;
 import mate.academy.repository.PaymentRepository;
+import mate.academy.repository.UserRepository;
 import mate.academy.repository.booking.BookingRepository;
+import mate.academy.service.BookingService;
+import mate.academy.service.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,6 +32,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final NotificationService notificationService;
     private final PaymentRepository paymentRepository;
+    private final UserRepository userRepository;
 
     @Override
     public BookingDto getBookingById(Long id) {
@@ -37,11 +41,12 @@ public class BookingServiceImpl implements BookingService {
                         EntityNotFoundException("Can't find booking with id " + id)));
     }
 
+    @Override
     public List<BookingDto> getBookingsByUserId(Long userId, Pageable pageable) {
         return bookingRepository.findAllByUserId(userId, pageable)
                 .stream()
                 .map(bookingMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -51,35 +56,34 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public BookingDto createBooking(CreateBookingRequestDto request, User user) {
-        // Check pending payments
-        long pendingPayments = paymentRepository.countPendingPaymentsByUserId(user.getId());
+    public BookingDto createBooking(CreateBookingRequestDto request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException(""
+                        + "User not found with id: " + userId));
+
+        long pendingPayments = paymentRepository.countPendingPaymentsByUserId(userId);
         if (pendingPayments > 0) {
-            throw new IllegalStateException(
-                    "You have pending payments. Please pay them before booking.");
+            throw new IllegalStateException("You have pending payments. "
+                    + "Please pay them before booking.");
         }
 
-        // Check for date conflicts
         for (LocalDate date = request.getCheckInDate();
-                     !date.isAfter(request.getCheckOutDate());
-                     date = date.plusDays(1)) {
+                !date.isAfter(request.getCheckOutDate());
+                date = date.plusDays(1)) {
             boolean isBooked = bookingRepository
-                     .existsByAccommodationIdAndCheckInDateBeforeAndCheckOutDateAfter(
-                     request.getAccommodationId(), date, date);
+                    .existsByAccommodationIdAndCheckInDateBeforeAndCheckOutDateAfter(
+                            request.getAccommodationId(), date, date);
             if (isBooked) {
-                throw new BookingAlreadyExistsException(
-                        "Accommodation is already booked during the selected period");
+                throw new BookingAlreadyExistsException(""
+                        + "Accommodation is already booked during the selected period");
             }
         }
 
-        // Map and set user
         Booking booking = bookingMapper.toEntity(request);
         booking.setUser(user);
 
-        // Save and return DTO
         Booking savedBooking = bookingRepository.save(booking);
 
-        // Send notification
         String message = String.format(
                 "New booking created:\nUser: %s\nAccommodation: %s\nCheck-in: %s\nCheck-out: %s",
                 savedBooking.getUser().getUsername(),

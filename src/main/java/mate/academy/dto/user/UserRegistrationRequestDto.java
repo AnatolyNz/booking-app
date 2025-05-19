@@ -1,7 +1,7 @@
 package mate.academy.dto.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -12,16 +12,16 @@ import mate.academy.lib.FieldMatch;
 @FieldMatch(first = "password", second = "repeatPassword", message = "Passwords must match")
 @Accessors(chain = true)
 public class UserRegistrationRequestDto {
-    @NotNull
+    @NotBlank
     private String email;
-    @NotNull
+    @NotBlank
     @Size(min = 7, max = 100)
     private String password;
-    @NotNull
+    @NotBlank
     @Size(min = 7, max = 100)
     private String repeatPassword;
-    @NotNull
+    @NotBlank
     private String firstName;
-    @NotNull
+    @NotBlank
     private String lastName;
 }

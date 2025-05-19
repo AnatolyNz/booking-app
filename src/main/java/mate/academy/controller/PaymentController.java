@@ -37,7 +37,7 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
-    @GetMapping()
+    @GetMapping
     @Operation(summary = "Retrieve payments", description =
             "Get payment information for users or all payments for admins")
     public List<PaymentDto> getPayments(Authentication authentication,

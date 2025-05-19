@@ -7,7 +7,6 @@ import mate.academy.model.Accommodation;
 
 @Data
 public class UpdateAccommodationRequestDto {
-
     private String location;
     private String size;
     private List<String> amenities;
@@ -16,4 +15,3 @@ public class UpdateAccommodationRequestDto {
     private BigDecimal dailyRate;
     private Accommodation.Type type;
 }
-

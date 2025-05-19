@@ -1,5 +1,8 @@
-INSERT INTO users (id, email, first_name, last_name, password, role, is_deleted)
-VALUES (1, 'user@example.com', 'John', 'Doe', 'encoded_password', 'USER', FALSE);
+INSERT INTO roles (id, role_name) VALUES (1, 'USER');
+INSERT INTO roles (id, role_name) VALUES (2, 'ADMIN');
+
+INSERT INTO users (id, email, first_name, last_name, password, role_id, is_deleted)
+VALUES (1, 'user@example.com', 'John', 'Doe', 'encoded_password', 1, FALSE);
 
 INSERT INTO accommodations (
     id, location, size, price, daily_rate, availability, type, is_deleted, amenities

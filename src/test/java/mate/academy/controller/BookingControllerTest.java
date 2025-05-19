@@ -26,8 +26,10 @@ import lombok.SneakyThrows;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
 import mate.academy.exception.BookingAlreadyCancelledException;
+import mate.academy.model.Role;
 import mate.academy.model.User;
 import mate.academy.repository.PaymentRepository;
+import mate.academy.repository.UserRepository;
 import mate.academy.service.BookingService;
 import mate.academy.service.UserService;
 import org.junit.jupiter.api.AfterEach;
@@ -39,8 +41,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -67,6 +74,9 @@ public class BookingControllerTest {
 
     @MockBean
     private PaymentRepository paymentRepository;
+
+    @MockBean
+    private UserRepository userRepository;
 
     @MockBean
     private UserService userService;
@@ -114,21 +124,28 @@ public class BookingControllerTest {
     @Test
     @DisplayName("Get all bookings")
     void getAllBookings_ReturnsList() throws Exception {
-        // Given: Mock user and service behavior
+        // Given: Mock user
+        User mockUser = new User();
+        mockUser.setId(1L);
+        mockUser.setEmail("user@example.com");
+
+        Role role = new Role();
+        role.setRoleName(Role.RoleName.USER);
+        mockUser.setRole(role);
+
+        when(userRepository.findByEmail("user@example.com"))
+                .thenReturn(Optional.of(mockUser));
+
+        // Mock service responses
         BookingDto mockBooking = new BookingDto();
         mockBooking.setId(1L);
         mockBooking.setStatus(BookingDto.BookingStatus.PENDING);
         List<BookingDto> bookingList = List.of(mockBooking);
-        BookingDto mockBookingWithoutUserId = new BookingDto();
-        mockBookingWithoutUserId.setStatus(BookingDto.BookingStatus.PENDING);
-        List<BookingDto> bookingListWithoutUserId = List.of(mockBookingWithoutUserId);
 
-        when(bookingService.getBookingsByUserId(any(), any()))
+        when(bookingService.getBookingsByUserId(eq(1L), any()))
                 .thenReturn(bookingList);
 
-        when(bookingService.getAllBookingsWithoutUserId(any()))
-                .thenReturn(bookingListWithoutUserId);
-
+        // Act & Assert
         MvcResult result = mockMvc.perform(get("/bookings/my")
                         .param("page", "0")
                         .param("size", "5")
@@ -145,10 +162,26 @@ public class BookingControllerTest {
 
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
     @Test
-    @DisplayName("Admin gets bookings by userId")
-    void getBookings_AdminWithUserId_ShouldReturnBookings() throws Exception {
+    @DisplayName("Admin gets all bookings (userId resolved from Authentication)")
+    void getBookings_AdminWithUserResolvedFromAuth_ShouldReturnBookings() throws Exception {
+        User adminUser = new User();
+        adminUser.setId(1L);
+        adminUser.setEmail("admin@example.com");
+
+        Role role = new Role();
+        role.setRoleName(Role.RoleName.ADMIN);
+        adminUser.setRole(role);
+
+        when(userRepository.findByEmail("admin@example.com"))
+                .thenReturn(Optional.of(adminUser));
+
+        List<BookingDto> bookings = List.of(
+                new BookingDto()
+        );
+        when(bookingService.getAllBookingsWithoutUserId(any(Pageable.class)))
+                .thenReturn(bookings);
+
         mockMvc.perform(get("/bookings/my")
-                        .param("userId", "1")
                         .param("page", "0")
                         .param("size", "5")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -179,7 +212,6 @@ public class BookingControllerTest {
         assertEquals("PENDING", actual.getStatus().toString());
     }
 
-    @WithMockUser(username = "user@example.com", roles = {"USER"})
     @Test
     @DisplayName("Create booking successfully")
     void createBooking_ValidRequest_ReturnsCreatedBooking() throws Exception {
@@ -194,9 +226,19 @@ public class BookingControllerTest {
         mockUser.setId(1L);
         mockUser.setEmail("user@example.com");
         mockUser.setPassword("password");
-        mockUser.setRole(User.UserRole.USER);
 
-        when(userService.findByEmail("user@example.com")).thenReturn(Optional.of(mockUser));
+        Role role = new Role();
+        role.setRoleName(Role.RoleName.USER);
+        mockUser.setRole(role);
+
+        Authentication auth = new TestingAuthenticationToken(
+                mockUser,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(mockUser));
 
         String jsonRequest = objectMapper.writeValueAsString(request);
         mockMvc.perform(post("/bookings")
@@ -204,6 +246,8 @@ public class BookingControllerTest {
                         .content(jsonRequest))
                 .andExpect(status().isCreated())
                 .andReturn();
+
+        SecurityContextHolder.clearContext();
     }
 
     @WithMockUser(username = "user@example.com", roles = {"USER"})
@@ -248,13 +292,16 @@ public class BookingControllerTest {
         mockUser.setId(1L);
         mockUser.setEmail("user@example.com");
         mockUser.setPassword("password");
-        mockUser.setRole(User.UserRole.USER);
+
+        Role role = new Role();
+        role.setRoleName(Role.RoleName.USER);
+        mockUser.setRole(role);
 
         BookingDto mockBooking = new BookingDto();
         mockBooking.setId(1L);
         mockBooking.setStatus(BookingDto.BookingStatus.CONFIRMED);
 
-        when(userService.findByEmail("user@example.com"))
+        when(userRepository.findByEmail("user@example.com"))
                 .thenReturn(Optional.of(mockUser));
 
         when(bookingService.updateBooking(eq(1L), any(CreateBookingRequestDto.class)))

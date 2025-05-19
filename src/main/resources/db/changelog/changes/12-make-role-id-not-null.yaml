@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: make-role-id-not-null
+      author: AnatoliiNazarov
+      preConditions:
+        - onFail: HALT
+        - sqlCheck:
+            expectedResult: "0"
+            sql: SELECT COUNT(*) FROM users WHERE role_id IS NULL
+      changes:
+        - addNotNullConstraint:
+            columnName: role_id
+            tableName: users

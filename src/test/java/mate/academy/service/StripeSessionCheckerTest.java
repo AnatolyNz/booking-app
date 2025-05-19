@@ -1,5 +1,7 @@
 package mate.academy.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mock;
@@ -83,19 +85,18 @@ class StripeSessionCheckerTest {
     }
 
     @Test
-    void checkPendingSessions_ShouldHandleStripeException() throws Exception {
-        // Given
+    void checkPendingSessions_ShouldHandleStripeException() {
         when(paymentRepository.findAllByStatus(Payment.PaymentStatus.PENDING))
                 .thenReturn(List.of(pendingPayment));
 
         when(stripeService.retrieveSession("sess_123"))
                 .thenThrow(new StripeSessionException("Session error"));
 
-        // When
-        sessionChecker.checkPendingSessions();
+        StripeSessionException exception = assertThrows(
+                StripeSessionException.class,
+                () -> sessionChecker.checkPendingSessions()
+        );
 
-        // Then
-        verify(paymentRepository, never()).save(any());
-        // Optionally verify logging or print statement
+        assertEquals("Stripe session check failed: Session error", exception.getMessage());
     }
 }

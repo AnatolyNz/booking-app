@@ -35,7 +35,8 @@ public class StripeSessionChecker {
                 }
 
             } catch (StripeSessionException e) {
-                System.err.println("Stripe session check failed: " + e.getMessage());
+                throw new StripeSessionException(
+                        "Stripe session check failed: " + e.getMessage(), e);
             }
         }
     }

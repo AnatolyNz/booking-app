@@ -5,17 +5,19 @@ import mate.academy.dto.accommodation.AccommodationDto;
 import mate.academy.dto.accommodation.AccommodationSearchParameters;
 import mate.academy.dto.accommodation.CreateAccommodationRequestDto;
 import mate.academy.dto.accommodation.UpdateAccommodationRequestDto;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface AccommodationService {
 
     AccommodationDto save(CreateAccommodationRequestDto createAccommodationRequestDto);
 
-    List<AccommodationDto> findAll(Pageable pageable);
+    Page<AccommodationDto> findAll(Pageable pageable);
 
     AccommodationDto getAccommodationById(Long id);
 
-    void updateById(Long id, UpdateAccommodationRequestDto updateAccommodationRequestDto);
+    AccommodationDto updateById(Long id, UpdateAccommodationRequestDto
+            updateAccommodationRequestDto);
 
     void deleteById(Long id);
 

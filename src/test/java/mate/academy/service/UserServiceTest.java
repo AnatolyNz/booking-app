@@ -11,8 +11,11 @@ import mate.academy.dto.user.UserRegistrationRequestDto;
 import mate.academy.dto.user.UserResponseDto;
 import mate.academy.exception.RegistrationException;
 import mate.academy.mapper.UserMapper;
+import mate.academy.model.Role;
 import mate.academy.model.User;
+import mate.academy.repository.RoleRepository;
 import mate.academy.repository.UserRepository;
+import mate.academy.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +33,8 @@ public class UserServiceTest {
     private static final String FIRST_NAME = "John";
     private static final String LAST_NAME = "Doe";
 
+    @Mock
+    private RoleRepository roleRepository;
     @Mock
     private UserRepository userRepository;
 
@@ -58,8 +63,8 @@ public class UserServiceTest {
                 .setFirstName("John")
                 .setLastName("Doe");
 
-        when(userRepository.findByEmail(request.getEmail()))
-                .thenReturn(Optional.of(new User()));
+        when(userRepository.existsByEmail(request.getEmail()))
+                .thenReturn(true);
 
         RegistrationException exception = assertThrows(RegistrationException.class,
                 () -> userService.register(request));
@@ -77,18 +82,27 @@ public class UserServiceTest {
                 .setFirstName("John")
                 .setLastName("Doe");
 
-        User userToSave = new User();
-        userToSave.setEmail(request.getEmail());
-        userToSave.setPassword("encodedPassword");
-        userToSave.setFirstName(request.getFirstName());
-        userToSave.setLastName(request.getLastName());
-        userToSave.setRole(User.UserRole.USER);
+        Role role = new Role();
+        role.setRoleName(Role.RoleName.USER);
+
+        User mappedUser = new User();
+        mappedUser.setEmail(request.getEmail());
+        mappedUser.setFirstName(request.getFirstName());
+        mappedUser.setLastName(request.getLastName());
+
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(userMapper.toEntity(request)).thenReturn(mappedUser);
+        when(passwordEncoder.encode(request.getPassword())).thenReturn("encodedPassword");
+        when(roleRepository.findByRoleName(Role.RoleName.USER)).thenReturn(Optional.of(role));
 
         User savedUser = new User();
         savedUser.setId(1L);
-        savedUser.setEmail(userToSave.getEmail());
-        savedUser.setFirstName(userToSave.getFirstName());
-        savedUser.setLastName(userToSave.getLastName());
+        savedUser.setEmail(mappedUser.getEmail());
+        savedUser.setFirstName(mappedUser.getFirstName());
+        savedUser.setLastName(mappedUser.getLastName());
+        savedUser.setRole(role);
+
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
         UserResponseDto expected = new UserResponseDto()
                 .setId(1L)
@@ -96,10 +110,7 @@ public class UserServiceTest {
                 .setFirstName(savedUser.getFirstName())
                 .setLastName(savedUser.getLastName());
 
-        when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
-        when(passwordEncoder.encode(request.getPassword())).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(userMapper.toDto(savedUser)).thenReturn(expected);
+        when(userMapper.toDto(any(User.class))).thenReturn(expected);
 
         UserResponseDto actual = userService.register(request);
 

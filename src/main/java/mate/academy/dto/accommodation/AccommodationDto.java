@@ -7,7 +7,6 @@ import mate.academy.model.Accommodation;
 
 @Data
 public class AccommodationDto {
-
     private Long id;
     private String location;
     private String size;
@@ -17,6 +16,4 @@ public class AccommodationDto {
     private BigDecimal dailyRate;
     private Accommodation.Type type;
     private boolean isDeleted;
-
 }
-

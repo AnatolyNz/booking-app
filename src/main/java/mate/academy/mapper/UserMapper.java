@@ -1,7 +1,7 @@
 package mate.academy.mapper;
 
 import mate.academy.config.MapperConfig;
-import mate.academy.dto.accommodation.CreateAccommodationRequestDto;
+import mate.academy.dto.user.UserRegistrationRequestDto;
 import mate.academy.dto.user.UserResponseDto;
 import mate.academy.model.User;
 import org.mapstruct.Mapper;
@@ -10,5 +10,5 @@ import org.mapstruct.Mapper;
 public interface UserMapper {
     UserResponseDto toDto(User user);
 
-    User toModel(CreateAccommodationRequestDto requestDto);
+    User toEntity(UserRegistrationRequestDto requestDto);
 }

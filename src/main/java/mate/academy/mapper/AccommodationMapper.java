@@ -8,9 +8,10 @@ import org.mapstruct.Mapper;
 
 @Mapper(config = MapperConfig.class)
 public interface AccommodationMapper {
+
     AccommodationDto toDto(Accommodation accommodation);
 
     Accommodation toModel(CreateAccommodationRequestDto requestDto);
 
-    Accommodation toEntity(CreateAccommodationRequestDto bookDto);
+    //Accommodation toEntity(CreateAccommodationRequestDto bookDto);
 }

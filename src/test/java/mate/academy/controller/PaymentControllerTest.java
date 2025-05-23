@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -42,6 +43,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
@@ -125,9 +128,10 @@ public class PaymentControllerTest {
         payment2.setStatus(PaymentDto.PaymentStatus.PAID);
 
         List<PaymentDto> mockedPayments = Arrays.asList(payment1, payment2);
+        Page<PaymentDto> mockedPage = new PageImpl<>(mockedPayments);
 
         when(paymentService.getAllPayments(any(Pageable.class)))
-                .thenReturn(mockedPayments);
+                .thenReturn(mockedPage);
 
         MvcResult result = mockMvc.perform(get("/payments")
                         .param("page", "0")
@@ -138,7 +142,9 @@ public class PaymentControllerTest {
 
         String responseBody = result.getResponse().getContentAsString();
 
-        PaymentDto[] payments = objectMapper.readValue(responseBody, PaymentDto[].class);
+        JsonNode rootNode = objectMapper.readTree(responseBody);
+        JsonNode contentNode = rootNode.get("content");
+        PaymentDto[] payments = objectMapper.treeToValue(contentNode, PaymentDto[].class);
 
         assertTrue(payments.length > 0, "Expected payments to be returned, but none were found.");
 
@@ -165,10 +171,12 @@ public class PaymentControllerTest {
         payment2.setSessionUrl("session124");
         payment2.setStatus(PaymentDto.PaymentStatus.PAID);
 
-        List<PaymentDto> mockedPayments = Arrays.asList(payment1, payment2);
+        List<PaymentDto> mockedList = List.of(payment1, payment2);
+
+        Page<PaymentDto> mockedPage = new PageImpl<>(mockedList);
 
         when(paymentService.getPaymentsByUserId(eq(1L), any(Pageable.class)))
-                .thenReturn(mockedPayments);
+                .thenReturn(mockedPage);
 
         MvcResult result = mockMvc.perform(get("/payments")
                         .param("userId", "1")
@@ -181,7 +189,9 @@ public class PaymentControllerTest {
         String responseBody = result.getResponse().getContentAsString();
         System.out.println("Response Body: " + responseBody);
 
-        PaymentDto[] payments = objectMapper.readValue(responseBody, PaymentDto[].class);
+        JsonNode rootNode = objectMapper.readTree(responseBody);
+        JsonNode contentNode = rootNode.get("content");
+        PaymentDto[] payments = objectMapper.treeToValue(contentNode, PaymentDto[].class);
 
         assertTrue(payments.length > 0, "Expected payments to be returned, but none were found.");
 

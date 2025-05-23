@@ -2,7 +2,6 @@ package mate.academy.service.impl;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
@@ -42,17 +41,15 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getBookingsByUserId(Long userId, Pageable pageable) {
+    public Page<BookingDto> getBookingsByUserId(Long userId, Pageable pageable) {
         return bookingRepository.findAllByUserId(userId, pageable)
-                .stream()
-                .map(bookingMapper::toDto)
-                .toList();
+                .map(bookingMapper::toDto);
     }
 
     @Override
-    public List<BookingDto> getAllBookingsWithoutUserId(Pageable pageable) {
-        Page<Booking> allOrders = bookingRepository.findAll(pageable);
-        return bookingMapper.toBookingDto(allOrders);
+    public Page<BookingDto> getAllBookingsWithoutUserId(Pageable pageable) {
+        return bookingRepository.findAll(pageable)
+                .map(bookingMapper::toDto);
     }
 
     @Override
@@ -97,13 +94,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getBookingsByUserIdAndStatus(
+    public Page<BookingDto> getBookingsByUserIdAndStatus(
             Long userId, Booking.BookingStatus status, Pageable pageable) {
         return bookingRepository.findByUserIdAndStatus(userId,
                         status, pageable)
-                .stream()
-                .map(bookingMapper::toDto)
-                .collect(Collectors.toList());
+                .map(bookingMapper::toDto);
     }
 
     @Override

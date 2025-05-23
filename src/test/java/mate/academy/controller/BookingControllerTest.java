@@ -3,6 +3,7 @@ package mate.academy.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
@@ -16,6 +17,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -26,6 +29,7 @@ import lombok.SneakyThrows;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
 import mate.academy.exception.BookingAlreadyCancelledException;
+import mate.academy.model.Booking;
 import mate.academy.model.Role;
 import mate.academy.model.User;
 import mate.academy.repository.PaymentRepository;
@@ -41,6 +45,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
@@ -136,16 +143,16 @@ public class BookingControllerTest {
         when(userRepository.findByEmail("user@example.com"))
                 .thenReturn(Optional.of(mockUser));
 
-        // Mock service responses
         BookingDto mockBooking = new BookingDto();
         mockBooking.setId(1L);
         mockBooking.setStatus(BookingDto.BookingStatus.PENDING);
         List<BookingDto> bookingList = List.of(mockBooking);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<BookingDto> bookingsPage = new PageImpl<>(bookingList, pageable, bookingList.size());
 
         when(bookingService.getBookingsByUserId(eq(1L), any()))
-                .thenReturn(bookingList);
+                .thenReturn(bookingsPage);
 
-        // Act & Assert
         MvcResult result = mockMvc.perform(get("/bookings/my")
                         .param("page", "0")
                         .param("size", "5")
@@ -156,8 +163,12 @@ public class BookingControllerTest {
         String responseBody = result.getResponse().getContentAsString();
         System.out.println("Response Body: " + responseBody);
 
-        BookingDto[] bookings = objectMapper.readValue(responseBody, BookingDto[].class);
-        assertTrue(bookings.length > 0);
+        JsonNode root = objectMapper.readTree(responseBody);
+        List<BookingDto> bookings = objectMapper.readValue(
+                root.get("content").toString(),
+                new TypeReference<List<BookingDto>>() {}
+        );
+        assertTrue(bookings.size() > 0);
     }
 
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
@@ -175,18 +186,20 @@ public class BookingControllerTest {
         when(userRepository.findByEmail("admin@example.com"))
                 .thenReturn(Optional.of(adminUser));
 
-        List<BookingDto> bookings = List.of(
-                new BookingDto()
-        );
+        List<BookingDto> bookingList = List.of(new BookingDto());
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<BookingDto> bookingsPage = new PageImpl<>(bookingList, pageable, bookingList.size());
+
         when(bookingService.getAllBookingsWithoutUserId(any(Pageable.class)))
-                .thenReturn(bookings);
+                .thenReturn(bookingsPage);
 
         mockMvc.perform(get("/bookings/my")
                         .param("page", "0")
                         .param("size", "5")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(1));
     }
 
     @WithMockUser(username = "user@example.com", roles = {"USER"})
@@ -265,16 +278,32 @@ public class BookingControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    @WithMockUser(username = "manager@example.com", roles = {"MANAGER"})
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
     @Test
     @DisplayName("Get bookings by user ID and status - success")
     void getBookingsByUserIdAndStatus_ValidParams_ReturnsList() throws Exception {
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setId(1L);
+        bookingDto.setAccommodationId(100L);
+        bookingDto.setUserId(1L);
+        bookingDto.setStatus(BookingDto.BookingStatus.PENDING);
+        bookingDto.setCheckInDate(LocalDate.of(2025, 6, 1));
+        bookingDto.setCheckOutDate(LocalDate.of(2025, 6, 5));
+
+        Page<BookingDto> mockPage = new PageImpl<>(List.of(bookingDto));
+
+        given(bookingService.getBookingsByUserIdAndStatus(
+                eq(1L),
+                eq(Booking.BookingStatus.PENDING),
+                any(Pageable.class))
+        ).willReturn(mockPage);
+
         mockMvc.perform(get("/bookings/{userId}/{status}", 1L, "PENDING")
                         .param("page", "0")
                         .param("size", "10")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @WithMockUser(username = "user@example.com", roles = {"USER"})

@@ -13,7 +13,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Payment findBySessionId(String sessionId);
 
     @Query("SELECT p FROM Payment p WHERE p.isDeleted = false")
-    List<Payment> findAllPayments(Pageable pageable);
+    Page<Payment> findAllPayments(Pageable pageable);
 
     @Query("SELECT p FROM Payment p WHERE p.booking.user.id = :userId")
     Page<Payment> findAllByUserId(@Param("userId") Long userId, Pageable pageable);

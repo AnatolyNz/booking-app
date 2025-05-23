@@ -1,21 +1,21 @@
 package mate.academy.service;
 
-import java.util.List;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
 import mate.academy.model.Booking;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface BookingService {
     BookingDto getBookingById(Long id);
 
-    List<BookingDto> getBookingsByUserId(Long userId, Pageable pageable);
+    Page<BookingDto> getBookingsByUserId(Long userId, Pageable pageable);
 
-    List<BookingDto> getAllBookingsWithoutUserId(Pageable pageable);
+    Page<BookingDto> getAllBookingsWithoutUserId(Pageable pageable);
 
     BookingDto createBooking(CreateBookingRequestDto bookingDto, Long userId);
 
-    List<BookingDto> getBookingsByUserIdAndStatus(Long userId,
+    Page<BookingDto> getBookingsByUserIdAndStatus(Long userId,
                                                   Booking.BookingStatus status, Pageable pageable);
 
     BookingDto updateBooking(Long id, CreateBookingRequestDto request);

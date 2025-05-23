@@ -4,7 +4,6 @@ import com.stripe.exception.StripeException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import mate.academy.dto.payment.PaymentCancelResponseDto;
@@ -12,6 +11,7 @@ import mate.academy.dto.payment.PaymentDto;
 import mate.academy.dto.payment.PaymentResponseDto;
 import mate.academy.model.Payment;
 import mate.academy.service.PaymentService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,7 +40,7 @@ public class PaymentController {
     @GetMapping
     @Operation(summary = "Retrieve payments", description =
             "Get payment information for users or all payments for admins")
-    public List<PaymentDto> getPayments(Authentication authentication,
+    public Page<PaymentDto> getPayments(Authentication authentication,
                                         @RequestParam(value = "userId",
                                                 required = false) Long userId,
                                         Pageable pageable) {

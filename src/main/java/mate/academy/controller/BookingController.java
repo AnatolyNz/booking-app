@@ -3,7 +3,6 @@ package mate.academy.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import mate.academy.dto.booking.BookingDto;
 import mate.academy.dto.booking.CreateBookingRequestDto;
@@ -13,6 +12,7 @@ import mate.academy.model.User;
 import mate.academy.repository.UserRepository;
 import mate.academy.service.BookingService;
 import mate.academy.service.UserService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,7 +41,7 @@ public class BookingController {
     @PreAuthorize("hasAuthority('ROLE_USER') or hasAuthority('ROLE_ADMIN')")
     @GetMapping("/my")
     @Operation(summary = "Get all bookings", description = "Get a list of all available bookings")
-    public List<BookingDto> getAllBookings(Authentication authentication, Pageable pageable) {
+    public Page<BookingDto> getAllBookings(Authentication authentication, Pageable pageable) {
         String email = authentication.getName();
 
         User user = userRepository.findByEmail(email)
@@ -71,8 +71,6 @@ public class BookingController {
     public BookingDto createBooking(@RequestBody @Valid CreateBookingRequestDto request,
                                     Authentication authentication) {
         User user = (User) authentication.getPrincipal();
-        Long userId = user.getId();
-        String email = user.getEmail();
 
         try {
             return bookingService.createBooking(request, user.getId());
@@ -84,7 +82,7 @@ public class BookingController {
     @GetMapping("/{userId}/{status}")
     @Operation(summary = "Get bookings by user ID and status", description =
             "Retrieves bookings based on user ID and status (Available for managers)")
-    public List<BookingDto> getBookingsByUserIdAndStatus(
+    public Page<BookingDto> getBookingsByUserIdAndStatus(
             @PathVariable Long userId,
             @PathVariable Booking.BookingStatus status,
             Pageable pageable) {

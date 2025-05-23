@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
@@ -143,7 +144,7 @@ public class PaymentRepositoryTest {
         payment2.setDeleted(false);
         entityManager.persistAndFlush(payment2);
 
-        List<Payment> payments = paymentRepository.findAllPayments(PageRequest.of(0, 10));
-        assertEquals(2, payments.size());
+        Page<Payment> payments = paymentRepository.findAllPayments(PageRequest.of(0, 10));
+        assertEquals(2, payments.getContent().size());
     }
 }

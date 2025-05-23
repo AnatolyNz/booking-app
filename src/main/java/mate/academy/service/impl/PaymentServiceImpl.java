@@ -7,15 +7,14 @@ import com.stripe.param.checkout.SessionCreateParams;
 import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import mate.academy.dto.payment.PaymentCancelResponseDto;
 import mate.academy.dto.payment.PaymentDto;
 import mate.academy.exception.EntityNotFoundException;
+import mate.academy.exception.StripeSessionException;
 import mate.academy.mapper.PaymentMapper;
 import mate.academy.model.Booking;
 import mate.academy.model.Payment;
@@ -55,7 +54,7 @@ public class PaymentServiceImpl implements PaymentService {
                                    BigDecimal amountToPay) {
         Booking booking = bookingRepository
                 .findById(bookingId).orElseThrow(() ->
-                        new RuntimeException("Booking not found"));
+                        new EntityNotFoundException("Booking not found"));
 
         String sessionId = UUID.randomUUID().toString();
 
@@ -81,22 +80,20 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public Payment getPaymentBySessionId(String sessionId) {
         return Optional.ofNullable(paymentRepository.findBySessionId(sessionId))
-                .orElseThrow(() -> new RuntimeException("Payment not found with session ID: "
+                .orElseThrow(() -> new EntityNotFoundException("Payment not found with session ID: "
                         + sessionId));
     }
 
     @Override
-    public List<PaymentDto> getPaymentsByUserId(Long userId, Pageable pageable) {
+    public Page<PaymentDto> getPaymentsByUserId(Long userId, Pageable pageable) {
         Page<Payment> payments = paymentRepository.findAllByUserId(userId, pageable);
-        return payments.stream().map(payment -> paymentMapper.toDto(payment))
-                .collect(Collectors.toList());
+        return payments.map(paymentMapper::toDto);
     }
 
     @Override
-    public List<PaymentDto> getAllPayments(Pageable pageable) {
-        List<Payment> payments = paymentRepository.findAllPayments(pageable);
-        return payments.stream().map(payment -> paymentMapper.toDto(payment))
-                .collect(Collectors.toList());
+    public Page<PaymentDto> getAllPayments(Pageable pageable) {
+        Page<Payment> payments = paymentRepository.findAllPayments(pageable);
+        return payments.map(paymentMapper::toDto);
     }
 
     @Override
@@ -142,7 +139,8 @@ public class PaymentServiceImpl implements PaymentService {
 
             return paymentRepository.save(payment);
         } catch (Exception e) {
-            throw new RuntimeException("Stripe session creation failed");
+            throw new StripeSessionException("Stripe session creation failed") {
+            };
         }
     }
 

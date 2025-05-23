@@ -24,19 +24,16 @@ public class TelegramBot {
     public static void sendNotification(String message) {
         OkHttpClient client = new OkHttpClient();
 
-        // Create the request body with the parameters
         RequestBody body = new FormBody.Builder()
                 .add("chat_id", CHAT_ID)
                 .add("text", message)
                 .build();
 
-        // Create the HTTP request
         Request request = new Request.Builder()
                 .url(API_URL)
                 .post(body)
                 .build();
 
-        // Execute the request asynchronously
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) throws IOException {

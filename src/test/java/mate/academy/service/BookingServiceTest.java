@@ -111,11 +111,11 @@ public class BookingServiceTest {
         when(bookingMapper.toDto(booking1)).thenReturn(new BookingDto());
         when(bookingMapper.toDto(booking2)).thenReturn(new BookingDto());
 
-        List<BookingDto> result = bookingService.getBookingsByUserId(userId, pageable);
+        Page<BookingDto> result = bookingService.getBookingsByUserId(userId, pageable);
 
-        assertEquals(2, result.size());
-        assertNotNull(result.get(0));
-        assertNotNull(result.get(1));
+        assertEquals(2, result.getContent().size());
+        assertNotNull(result.getContent().get(0));
+        assertNotNull(result.getContent().get(1));
     }
 
     @Test
@@ -275,9 +275,9 @@ public class BookingServiceTest {
         when(bookingRepository.findByUserIdAndStatus(userId, status, pageable)).thenReturn(page);
         when(bookingMapper.toDto(booking1)).thenReturn(new BookingDto());
 
-        List<BookingDto> result = bookingService.getBookingsByUserIdAndStatus(userId,
+        Page<BookingDto> result = bookingService.getBookingsByUserIdAndStatus(userId,
                 status, pageable);
 
-        assertEquals(1, result.size());
+        assertEquals(1, result.getContent().size());
     }
 }

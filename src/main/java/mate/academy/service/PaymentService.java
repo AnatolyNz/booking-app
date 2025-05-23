@@ -2,11 +2,11 @@ package mate.academy.service;
 
 import com.stripe.exception.StripeException;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Map;
 import mate.academy.dto.payment.PaymentCancelResponseDto;
 import mate.academy.dto.payment.PaymentDto;
 import mate.academy.model.Payment;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface PaymentService {
@@ -16,9 +16,9 @@ public interface PaymentService {
 
     Payment updatePaymentStatus(Long paymentId, Payment.PaymentStatus status);
 
-    List<PaymentDto> getPaymentsByUserId(Long userId, Pageable pageable);
+    Page<PaymentDto> getPaymentsByUserId(Long userId, Pageable pageable);
 
-    List<PaymentDto> getAllPayments(Pageable pageable);
+    Page<PaymentDto> getAllPayments(Pageable pageable);
 
     Payment getPaymentBySessionId(String sessionId);
 

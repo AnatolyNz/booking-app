@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: insert-bookings-record
+      author: AnatoliiNazarov
+      changes:
+        - insert:
+            tableName: bookings
+            columns:
+              - column:
+                  name: check_in_date
+                  value: '2025-05-01'
+              - column:
+                  name: check_out_date
+                  value: '2025-05-07'
+              - column:
+                  name: accommodation_id
+                  value: 1
+              - column:
+                  name: user_id
+                  value: 1
+              - column:
+                  name: status
+                  value: 'PENDING'

@@ -65,19 +65,11 @@ public class AccommodationServiceImpl implements AccommodationService {
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Accommodation not found with id: " + id));
 
-        accommodation.setLocation(updateAccommodationRequestDto.getLocation());
-        accommodation.setSize(updateAccommodationRequestDto.getSize());
-        accommodation.setAmenities(updateAccommodationRequestDto.getAmenities());
-        accommodation.setPrice(updateAccommodationRequestDto.getPrice());
-        accommodation.setAvailability(updateAccommodationRequestDto.getAvailability());
-        accommodation.setDailyRate(updateAccommodationRequestDto.getDailyRate());
-        accommodation.setType(updateAccommodationRequestDto.getType());
+        accommodationMapper.updateAccommodationFromDto(updateAccommodationRequestDto,
+                accommodation);
 
-        Accommodation updated = accommodationRepository.save(accommodation);
-        if (updated == null) {
-            throw new IllegalStateException("Failed to save updated accommodation");
-        }
-        return accommodationMapper.toDto(updated);
+        accommodationRepository.save(accommodation);
+        return accommodationMapper.toDto(accommodation);
     }
 
     @Override

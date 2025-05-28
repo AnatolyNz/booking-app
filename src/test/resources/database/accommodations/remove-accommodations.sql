@@ -1,4 +1,4 @@
-DELETE FROM booking;
+DELETE FROM bookings;
 
 DELETE FROM accommodations;
 

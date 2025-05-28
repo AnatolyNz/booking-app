@@ -65,7 +65,7 @@ public class AccommodationController {
     @Operation(summary = "Update accommodation", description
             = "Updates an existing accommodation by its ID")
     public AccommodationDto updateAccommodation(@PathVariable Long id,
-                                                @RequestBody UpdateAccommodationRequestDto
+                                                @RequestBody @Valid UpdateAccommodationRequestDto
                                                         updateAccommodationRequestDto) {
         return accommodationService.updateById(id, updateAccommodationRequestDto);
     }

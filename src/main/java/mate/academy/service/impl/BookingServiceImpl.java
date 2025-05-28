@@ -111,7 +111,7 @@ public class BookingServiceImpl implements BookingService {
                     "Check-in and check-out dates cannot be null.");
         }
         Booking booking = bookingRepository.findById(id).orElseThrow(() ->
-                new BookingNotFoundException(id));
+                new BookingNotFoundException("Booking with ID " + id + " was not found."));
 
         boolean isBooked = false;
         for (LocalDate date = newCheckInDate;
@@ -137,7 +137,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public void cancelBooking(Long id) {
         Booking booking = bookingRepository.findById(id).orElseThrow(() ->
-                new BookingNotFoundException(id));
+                new BookingNotFoundException("Booking with ID " + id + " was not found."));
 
         if (booking.getAccommodation() == null) {
             throw new IllegalStateException("Booking must have an accommodation");
@@ -158,7 +158,7 @@ public class BookingServiceImpl implements BookingService {
         notificationService.sendMessage(booking.getUser().getUsername(), message);
     }
 
-    @Scheduled(cron = "0 22 12 * * ?")
+    @Scheduled(cron = "${scheduler.booking-check.cron}")
     @Transactional
     public void checkExpiredBookings() {
         LocalDate today = LocalDate.now();

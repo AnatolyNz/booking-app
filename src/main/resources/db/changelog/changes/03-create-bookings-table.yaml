@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: create-booking-table
+      id: create-bookings-table
       author: AnatoliiNazarov
       changes:
         - createTable:
-            tableName: booking
+            tableName: bookings
             columns:
               - column:
                   name: id
@@ -39,13 +39,13 @@ databaseChangeLog:
                   constraints:
                     nullable: false
         - addForeignKeyConstraint:
-            baseTableName: booking
+            baseTableName: bookings
             baseColumnNames: accommodation_id
             referencedTableName: accommodations
             referencedColumnNames: id
             constraintName: fk_accommodation
         - addForeignKeyConstraint:
-            baseTableName: booking
+            baseTableName: bookings
             baseColumnNames: user_id
             referencedTableName: users
             referencedColumnNames: id

@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+    private static final String ADMIN_EMAIL = "admin@example.com";
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
@@ -33,7 +34,7 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        Role.RoleName roleName = "admin@example.com".equalsIgnoreCase(request.getEmail())
+        Role.RoleName roleName = ADMIN_EMAIL.equalsIgnoreCase(request.getEmail())
                 ? Role.RoleName.ADMIN
                 : Role.RoleName.USER;
 

@@ -16,10 +16,12 @@ public interface BookingMapper {
 
     @Mapping(source = "accommodationId", target = "accommodation.id")
     @Mapping(source = "userId", target = "user.id")
+    @Mapping(target = "id", ignore = true)
     Booking toEntity(CreateBookingRequestDto requestDto);
 
     @Mapping(source = "accommodationId", target = "accommodation.id")
     @Mapping(source = "userId", target = "user.id")
+    @Mapping(target = "id", ignore = true)
     void updateBookingFromDto(CreateBookingRequestDto requestDto,
                               @MappingTarget Booking booking);
 }

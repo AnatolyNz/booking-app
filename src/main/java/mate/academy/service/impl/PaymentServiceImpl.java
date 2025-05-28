@@ -54,7 +54,7 @@ public class PaymentServiceImpl implements PaymentService {
                                    BigDecimal amountToPay) {
         Booking booking = bookingRepository
                 .findById(bookingId).orElseThrow(() ->
-                        new EntityNotFoundException("Booking not found"));
+                        new EntityNotFoundException("Booking not found " + bookingId));
 
         String sessionId = UUID.randomUUID().toString();
 
@@ -72,7 +72,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public Payment updatePaymentStatus(Long paymentId, Payment.PaymentStatus status) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new EntityNotFoundException("Payment not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Payment not found " + paymentId));
         payment.setStatus(status);
         return paymentRepository.save(payment);
     }

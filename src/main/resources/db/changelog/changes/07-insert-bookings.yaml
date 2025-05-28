@@ -1,10 +1,10 @@
 databaseChangeLog:
   - changeSet:
-      id: insert-booking-record
+      id: insert-bookings-record
       author: AnatoliiNazarov
       changes:
         - insert:
-            tableName: booking
+            tableName: bookings
             columns:
               - column:
                   name: check_in_date

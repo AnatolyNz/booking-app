@@ -10,5 +10,5 @@ INSERT INTO accommodations (
     1, 'Kyiv', 'MEDIUM', 1000, 150, 5, 'HOUSE', FALSE, ARRAY['WiFi', 'TV', 'Heating']
 );
 
-INSERT INTO booking (check_in_date, check_out_date, status, user_id, accommodation_id)
+INSERT INTO bookings (check_in_date, check_out_date, status, user_id, accommodation_id)
 VALUES (CURRENT_DATE + 1, CURRENT_DATE + 3, 'PENDING', 1, 1);

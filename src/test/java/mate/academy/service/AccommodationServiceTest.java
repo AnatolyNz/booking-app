@@ -2,8 +2,10 @@ package mate.academy.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.contains;
-import static org.mockito.Mockito.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -145,6 +147,19 @@ public class AccommodationServiceTest {
         when(accommodationRepository.findById(id)).thenReturn(Optional.of(existingAccommodation));
 
         when(accommodationRepository.save(existingAccommodation)).thenReturn(existingAccommodation);
+
+        doAnswer(invocation -> {
+            UpdateAccommodationRequestDto dto = invocation.getArgument(0);
+            Accommodation acc = invocation.getArgument(1);
+            acc.setLocation(dto.getLocation());
+            acc.setSize(dto.getSize());
+            acc.setAmenities(dto.getAmenities());
+            acc.setPrice(dto.getPrice());
+            acc.setAvailability(dto.getAvailability());
+            acc.setDailyRate(dto.getDailyRate());
+            acc.setType(dto.getType());
+            return null;
+        }).when(accommodationMapper).updateAccommodationFromDto(any(), any());
 
         AccommodationDto dto = new AccommodationDto();
         when(accommodationMapper.toDto(existingAccommodation)).thenReturn(dto);

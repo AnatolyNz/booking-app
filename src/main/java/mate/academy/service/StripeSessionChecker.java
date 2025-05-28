@@ -18,8 +18,6 @@ public class StripeSessionChecker {
     private final StripeService stripeService;
 
     @Scheduled(fixedRateString = "${scheduler.fixed-rate-ms}") // every 60 seconds
-    //@Scheduled(fixedRate = 60000) // every 60 seconds
-    //scheduler.fixed-rate-ms
     public void checkPendingSessions() {
         List<Payment> pendingPayments = paymentRepository
                 .findAllByStatus(Payment.PaymentStatus.PENDING);
